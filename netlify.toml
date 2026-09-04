@@ -1,0 +1,13 @@
+[build]
+  command = "npm run build"
+  publish = "dist"
+
+[build.environment]
+  NODE_VERSION = "22"
+  VITE_API_BASE_URL = "https://one.easyrelay.us/api"
+
+# React Router SPA — deep links must serve index.html
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200

@@ -10,6 +10,7 @@ import {
   LogoutOutlined,
   MenuFoldOutlined,
   MenuUnfoldOutlined,
+  NotificationOutlined,
   TagsOutlined,
 } from '@ant-design/icons';
 import { PaymentsBell } from '../components/PaymentsBell';
@@ -44,6 +45,7 @@ const PAGE_TITLES: Record<string, string> = {
   '/plans': 'Plans',
   '/payments': 'Payments',
   '/promo-codes': 'Promo codes',
+  '/notifications': 'Notifications',
 };
 
 export function AppLayout() {
