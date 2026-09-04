@@ -1,0 +1,433 @@
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&display=swap');
+
+:root {
+  --sidebar-bg: #0b1f1c;
+  --sidebar-border: rgba(255, 255, 255, 0.06);
+  --page-bg: #eef2f6;
+  --card-bg: #ffffff;
+  --text-primary: #0f172a;
+  --text-secondary: #64748b;
+  --accent: #0f766e;
+  --shadow-card: 0 1px 2px rgba(15, 23, 42, 0.05), 0 8px 24px rgba(15, 23, 42, 0.06);
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  margin: 0;
+  min-height: 100%;
+}
+
+body {
+  font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  color: var(--text-primary);
+  background: var(--page-bg);
+  -webkit-font-smoothing: antialiased;
+}
+
+.admin-shell {
+  height: 100vh;
+  overflow: hidden;
+  background: var(--page-bg);
+}
+
+.admin-shell > .ant-layout {
+  height: 100vh;
+  overflow: hidden;
+}
+
+.admin-sidebar {
+  background: var(--sidebar-bg) !important;
+  border-right: 1px solid var(--sidebar-border) !important;
+  height: 100vh !important;
+}
+
+.admin-sidebar-logo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 18px 16px 14px;
+}
+
+.admin-sidebar-logo--collapsed {
+  justify-content: center;
+  padding-inline: 8px;
+}
+
+.admin-sidebar-logo-mark {
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  overflow: hidden;
+  flex-shrink: 0;
+  background: transparent;
+}
+
+.admin-sidebar-logo-mark img {
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: cover;
+}
+
+.admin-sidebar-logo-title {
+  color: #f8fafc;
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+.admin-sidebar-logo-sub {
+  color: #94a3b8;
+  font-size: 12px;
+}
+
+.admin-sidebar-menu {
+  background: transparent !important;
+  border-inline-end: none !important;
+}
+
+.admin-header {
+  background: #fff !important;
+  border-bottom: 1px solid #e2e8f0;
+  display: flex !important;
+  align-items: center;
+  justify-content: space-between;
+  padding-inline: 16px !important;
+  height: 56px !important;
+  line-height: 56px !important;
+}
+
+.admin-header-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.admin-header-left h2 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.admin-header-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.admin-header-user {
+  color: var(--text-secondary);
+  font-size: 13px;
+}
+
+/* The new-payments bell dropdown. */
+.bell-panel {
+  width: 340px;
+  max-height: 60vh;
+  overflow-y: auto;
+  padding: 12px;
+}
+
+.bell-panel-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.bell-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.bell-list li {
+  padding: 8px 8px;
+  border-radius: 8px;
+  line-height: 1.35;
+}
+
+.bell-list li + li {
+  margin-top: 2px;
+}
+
+/* Anything that arrived since the bell was last opened. */
+.bell-list li.is-new {
+  background: #ecfdf5;
+}
+
+.bell-list-main {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  font-size: 13px;
+}
+
+.bell-amount {
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.bell-list-sub {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 4px;
+}
+
+/* Secondary line inside a table cell — an email's name, a device's key. */
+.cell-sub {
+  color: var(--text-secondary);
+  font-size: 12px;
+}
+
+.admin-table--clickable .ant-table-tbody > tr {
+  cursor: pointer;
+}
+
+/* Feature access editor in the user drawer: label + effective state on the
+   left, the three-way override control on the right. */
+.feature-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.feature-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 6px 10px;
+  border: 1px solid var(--sidebar-border, #e2e8f0);
+  border-color: #e2e8f0;
+  border-radius: 8px;
+}
+
+.feature-name {
+  display: flex;
+  align-items: center;
+  font-size: 13px;
+}
+
+.admin-content {
+  padding: 20px;
+  overflow: auto;
+  height: calc(100vh - 56px);
+}
+
+.page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+  margin-bottom: 18px;
+}
+
+.page-header h1 {
+  margin: 0;
+  font-size: 22px;
+  font-weight: 700;
+}
+
+.page-header p {
+  margin: 4px 0 0;
+  color: var(--text-secondary);
+}
+
+.panel-card {
+  background: var(--card-bg);
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  padding: 16px;
+  box-shadow: var(--shadow-card);
+}
+
+/* Auto-fit rather than a fixed column count: cards get added and removed, and
+   a hardcoded number leaves a hole the day one more appears. */
+.stat-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  gap: 12px;
+}
+
+.chart-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+  margin-top: 16px;
+}
+
+@media (max-width: 900px) {
+  .chart-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.chart-card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.chart-card h3 {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.admin-table .ant-table {
+  font-size: 13px;
+  width: 100%;
+}
+
+/* Empty tables must not invent a horizontal scrollbar from scroll.x leftovers. */
+.admin-table .ant-table-empty .ant-table-container,
+.admin-table .ant-table-empty .ant-table-content,
+.admin-table .ant-table-empty .ant-table-body {
+  overflow-x: hidden !important;
+}
+
+.admin-table .ant-table-empty .ant-table-placeholder > .ant-table-cell {
+  overflow: hidden;
+}
+
+.admin-table .ant-table-thead > tr > th {
+  padding: 8px 10px !important;
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.admin-table .ant-table-tbody > tr > td {
+  padding: 6px 10px !important;
+  vertical-align: middle;
+}
+
+.admin-table .ant-tag {
+  margin-inline-end: 0;
+  font-size: 11px;
+  line-height: 18px;
+  padding-inline: 6px;
+}
+
+.admin-table code {
+  font-size: 12px;
+}
+
+.stat-card {
+  background: var(--card-bg);
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  padding: 16px;
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  box-shadow: var(--shadow-card);
+}
+
+.stat-card-label {
+  color: var(--text-secondary);
+  font-size: 13px;
+  margin-bottom: 6px;
+}
+
+.stat-card-value {
+  font-size: 22px;
+  font-weight: 700;
+  line-height: 1.1;
+}
+
+.stat-card-value.skeleton {
+  height: 28px;
+  width: 56%;
+  border-radius: 6px;
+  background: #f1f5f9;
+}
+
+.stat-card-hint {
+  margin-top: 6px;
+  color: var(--text-secondary);
+  font-size: 12px;
+}
+
+.stat-card-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  display: grid;
+  place-items: center;
+  background: #ecfdf5;
+  color: var(--accent);
+  font-size: 16px;
+}
+
+.login-page {
+  min-height: 100vh;
+  display: grid;
+  grid-template-columns: 1.1fr 1fr;
+  background:
+    radial-gradient(circle at 20% 20%, rgba(20, 184, 166, 0.18), transparent 40%),
+    linear-gradient(160deg, #0b1f1c 0%, #12352f 45%, #0f172a 100%);
+}
+
+.login-brand {
+  color: #ecfdf5;
+  padding: 64px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.login-brand h1 {
+  font-size: 42px;
+  margin: 0 0 12px;
+}
+
+.login-brand p {
+  max-width: 420px;
+  color: #99f6e4;
+  font-size: 16px;
+  line-height: 1.5;
+}
+
+.login-form-panel {
+  display: grid;
+  place-items: center;
+  padding: 32px;
+  background: rgba(238, 242, 246, 0.92);
+}
+
+.login-card {
+  width: min(100%, 400px);
+  background: #fff;
+  border-radius: 16px;
+  padding: 28px;
+  box-shadow: var(--shadow-card);
+}
+
+.login-card h2 {
+  margin: 0 0 4px;
+}
+
+.login-card-sub {
+  margin: 0 0 20px;
+  color: var(--text-secondary);
+}
+
+@media (max-width: 900px) {
+  .login-page {
+    grid-template-columns: 1fr;
+  }
+
+  .login-brand {
+    padding: 40px 28px 12px;
+  }
+}

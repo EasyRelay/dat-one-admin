@@ -1,0 +1,7 @@
+[File]: dat-data-nest/src/modules/ext/schemas/ext-device.schema.ts
+[Line]: deviceKey
+[Comment]: Per-browser install UUID from chrome.storage (datOneExtDeviceId). Survives sign-out so deactivate sticks across re-login.
+
+[File]: dat-one-admin/src/pages/DevicesPage.tsx
+[Line]: Actions column
+[Comment]: Power button toggles active/inactive. Inactive devices get DEVICE_DISABLED on next JWT-validated request.
