@@ -1,40 +1,46 @@
-import { PlusOutlined, ReloadOutlined, SearchOutlined } from '@ant-design/icons';
-import { App, Button, Input, Select, Space, Table, Tag, Tooltip } from 'antd';
-import type { ColumnsType } from 'antd/es/table';
-import { useCallback, useState } from 'react';
+import {
+  PlusOutlined,
+  ReloadOutlined,
+  SearchOutlined,
+} from "@ant-design/icons";
+import { App, Button, Input, Select, Space, Table, Tag, Tooltip } from "antd";
+import type { ColumnsType } from "antd/es/table";
+import { useCallback, useState } from "react";
 import {
   deletePayment,
   listPayments,
   updatePaymentStatus,
-} from '../api/payments.api';
-import { extractApiError } from '../api/client';
-import { PageHeader } from '../components/PageHeader';
-import { useDebouncedValue } from '../hooks/useDebouncedValue';
-import { useListRequest } from '../hooks/useListRequest';
-import { usePlansStore } from '../store/plans.store';
-import type { ExtPayment, PaymentStatus } from '../types/payment';
-import { formatDate, formatMoney } from '../utils/formatters';
-import { GrantPlanModal } from './users/GrantPlanModal';
+} from "../api/payments.api";
+import { extractApiError } from "../api/client";
+import { PageHeader } from "../components/PageHeader";
+import { useDebouncedValue } from "../hooks/useDebouncedValue";
+import { useListRequest } from "../hooks/useListRequest";
+import { useServerInfo } from "../hooks/useServerInfo";
+import { usePlansStore } from "../store/plans.store";
+import type { ExtPayment, PaymentStatus } from "../types/payment";
+import { formatDate, formatMoney } from "../utils/formatters";
+import { GrantPlanModal } from "./users/GrantPlanModal";
 
 function statusColor(status: PaymentStatus): string {
   switch (status) {
-    case 'paid':
-      return 'green';
-    case 'failed':
-      return 'red';
-    case 'refunded':
-      return 'orange';
+    case "paid":
+      return "green";
+    case "failed":
+      return "red";
+    case "refunded":
+      return "orange";
     default:
-      return 'default';
+      return "default";
   }
 }
 
 export function PaymentsPage() {
   const { message, modal } = App.useApp();
   const plans = usePlansStore((s) => s.plans);
+  const { devMode } = useServerInfo();
   const [status, setStatus] = useState<PaymentStatus | undefined>();
   const [plan, setPlan] = useState<string | undefined>();
-  const [email, setEmail] = useState('');
+  const [email, setEmail] = useState("");
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(20);
   const [createOpen, setCreateOpen] = useState(false);
@@ -69,103 +75,114 @@ export function PaymentsPage() {
 
   const columns: ColumnsType<ExtPayment> = [
     {
-      title: 'User',
+      title: "User",
       ellipsis: true,
       width: 220,
       render: (_, row) => row.userEmail ?? row.userId,
     },
     {
-      title: 'Amount',
+      title: "Amount",
       width: 110,
       render: (_, row) => formatMoney(row.amount, row.currency),
     },
     {
-      title: 'Plan',
+      title: "Plan",
       width: 130,
       render: (_, row) => (
         <Space size={4} wrap>
           <Tag color="cyan">{row.plan}</Tag>
-          {row.kind === 'trial' && <Tag color="purple">trial</Tag>}
+          {row.kind === "trial" && <Tag color="purple">trial</Tag>}
         </Space>
       ),
     },
     {
-      title: 'Status',
-      dataIndex: 'status',
+      title: "Status",
+      dataIndex: "status",
       width: 100,
       render: (value: PaymentStatus) => (
         <Tag color={statusColor(value)}>{value}</Tag>
       ),
     },
     {
-      title: 'Grants until',
-      dataIndex: 'appliedPlanExpiresAt',
+      title: "Grants until",
+      dataIndex: "appliedPlanExpiresAt",
       width: 150,
       render: formatDate,
     },
     {
-      title: 'Created',
-      dataIndex: 'createdAt',
+      title: "Created",
+      dataIndex: "createdAt",
       width: 150,
       render: formatDate,
     },
     {
-      title: '',
-      key: 'actions',
+      title: "",
+      key: "actions",
       width: 180,
-      render: (_, row) => (
-        <Space size={4} wrap>
-          {row.status !== 'paid' && (
-            <Tooltip title="Apply this plan to the account now">
-              <Button size="small" onClick={() => void changeStatus(row, 'paid')}>
-                Mark paid
-              </Button>
-            </Tooltip>
-          )}
-          {row.status === 'paid' && (
-            <Tooltip title="Put the account back on its previous plan">
-              <Button
-                size="small"
-                onClick={() =>
-                  modal.confirm({
-                    title: 'Refund this payment?',
-                    content:
-                      'The account returns to the plan it had before this payment.',
-                    okText: 'Refund',
-                    onOk: () => changeStatus(row, 'refunded'),
-                  })
-                }
-              >
-                Refund
-              </Button>
-            </Tooltip>
-          )}
-          <Button
-            size="small"
-            danger
-            onClick={() => {
-              modal.confirm({
-                title: 'Delete payment?',
-                content:
-                  'A paid payment also reverts the account to its previous plan. ' +
-                  'Refund instead if you want to keep the record.',
-                okButtonProps: { danger: true },
-                onOk: async () => {
-                  try {
-                    await deletePayment(row.id);
-                    void message.success('Deleted');
-                    void reload();
-                  } catch (err) {
-                    void message.error(extractApiError(err));
+      render: (_, row) =>
+        !devMode ? (
+          // The server refuses these outside development — development runs
+          // against the production database, so a stray click here would
+          // rewrite a real customer's billing record.
+          <Tooltip title="Editing payments is disabled on the live server. Refunds belong in the Stripe dashboard.">
+            <span style={{ color: "#999" }}>Read-only</span>
+          </Tooltip>
+        ) : (
+          <Space size={4} wrap>
+            {row.status !== "paid" && (
+              <Tooltip title="Apply this plan to the account now">
+                <Button
+                  size="small"
+                  onClick={() => void changeStatus(row, "paid")}
+                >
+                  Mark paid
+                </Button>
+              </Tooltip>
+            )}
+            {row.status === "paid" && (
+              <Tooltip title="Put the account back on its previous plan">
+                <Button
+                  size="small"
+                  onClick={() =>
+                    modal.confirm({
+                      title: "Refund this payment?",
+                      content:
+                        "The account returns to the plan it had before this payment.",
+                      okText: "Refund",
+                      onOk: () => changeStatus(row, "refunded"),
+                    })
                   }
-                },
-              });
-            }}
-          >
-            Delete
-          </Button>
-        </Space>
-      ),
+                >
+                  Refund
+                </Button>
+              </Tooltip>
+            )}
+            <Button
+              size="small"
+              danger
+              onClick={() => {
+                modal.confirm({
+                  title: "Delete payment?",
+                  content:
+                    "A paid payment also reverts the account to its previous plan. " +
+                    "Refund instead if you want to keep the record.",
+                  okButtonProps: { danger: true },
+                  onOk: async () => {
+                    try {
+                      await deletePayment(row.id);
+                      void message.success("Deleted");
+                      void reload();
+                    } catch (err) {
+                      void message.error(extractApiError(err));
+                    }
+                  },
+                });
+              }}
+            >
+              Delete
+            </Button>
+          </Space>
+        ),
     },
   ];
 
@@ -213,10 +230,10 @@ export function PaymentsPage() {
               setStatus(value);
             }}
             options={[
-              { value: 'pending', label: 'Pending' },
-              { value: 'paid', label: 'Paid' },
-              { value: 'failed', label: 'Failed' },
-              { value: 'refunded', label: 'Refunded' },
+              { value: "pending", label: "Pending" },
+              { value: "paid", label: "Paid" },
+              { value: "failed", label: "Failed" },
+              { value: "refunded", label: "Refunded" },
             ]}
           />
           <Select
@@ -248,7 +265,7 @@ export function PaymentsPage() {
             current: page,
             pageSize,
             total,
-            size: 'small',
+            size: "small",
             showSizeChanger: true,
             showTotal: (count) => `${count} payments`,
             onChange: (nextPage, nextSize) => {

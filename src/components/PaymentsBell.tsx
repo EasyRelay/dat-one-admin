@@ -1,8 +1,9 @@
 import { BellOutlined } from '@ant-design/icons';
 import { Badge, Button, Dropdown, Empty, Tag, Tooltip } from 'antd';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { listPayments } from '../api/payments.api';
+import { useVisiblePoll } from '../hooks/useVisiblePoll';
 import type { ExtPayment } from '../types/payment';
 import { formatDate, formatMoney } from '../utils/formatters';
 
@@ -51,11 +52,9 @@ export function PaymentsBell() {
     }
   }, []);
 
-  useEffect(() => {
-    void load();
-    const id = window.setInterval(() => void load(), POLL_MS);
-    return () => window.clearInterval(id);
-  }, [load]);
+  // Only while the tab is being looked at — an admin panel left open overnight
+  // should not keep asking for payments nobody is reading.
+  useVisiblePoll(load, POLL_MS);
 
   const unread = items.filter(
     (row) => new Date(row.createdAt).getTime() > seenAt,

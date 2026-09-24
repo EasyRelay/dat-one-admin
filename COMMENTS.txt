@@ -5,3 +5,11 @@
 [File]: dat-one-admin/src/pages/DevicesPage.tsx
 [Line]: Actions column
 [Comment]: Power button toggles active/inactive. Inactive devices get DEVICE_DISABLED on next JWT-validated request.
+
+[File]: dat-one-admin/src/pages/notifications/SendNotificationModal.tsx
+[Line]: 181-210
+[Comment]: Opened from the Notifications page (user=null) the dialog offers "Everyone" or "One account"; "One account" shows a server-side email/name search (UserPicker, line 71). Opened from a user drawer the recipient is fixed to that user. userId=null on the backend means every account.
+
+[File]: dat-one-admin/src/pages/users/UserDrawer.tsx
+[Line]: 464-479, 629-634
+[Comment]: "Send notification" in the drawer sends a notice only this account sees (extension panel + account page on easydat website). Disabled for archived accounts.

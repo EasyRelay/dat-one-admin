@@ -7,7 +7,7 @@ import {
   WifiOutlined,
 } from '@ant-design/icons';
 import { App, Button, Empty, Segmented } from 'antd';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import {
   Bar,
   BarChart,
@@ -25,7 +25,11 @@ import { extractApiError } from '../api/client';
 import { PageHeader } from '../components/PageHeader';
 import { StatCard } from '../components/StatCard';
 import type { ExtDashboard } from '../types/dashboard';
+import { useVisiblePoll } from '../hooks/useVisiblePoll';
 import { formatMoney } from '../utils/formatters';
+
+/** How stale the dashboard may get while somebody is watching it. */
+const DASHBOARD_POLL_MS = 30_000;
 
 const PLAN_COLORS = [
   '#0f766e',
@@ -57,13 +61,9 @@ export function DashboardPage() {
     }
   }, [message]);
 
-  useEffect(() => {
-    // Same shape as every list screen: the spinner flips synchronously here.
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    void load();
-    const id = window.setInterval(() => void load(), 30_000);
-    return () => window.clearInterval(id);
-  }, [load]);
+  // Paused while the tab is hidden, and refreshed the moment it comes back —
+  // there is nobody to read a dashboard that is not on screen.
+  useVisiblePoll(load, DASHBOARD_POLL_MS);
 
   const signupChart = useMemo(
     () =>

@@ -1,9 +1,24 @@
-import { MoreOutlined, PlusOutlined } from '@ant-design/icons';
-import { Alert, App, Button, Dropdown, Switch, Table, Tag, Tooltip } from 'antd';
+import {
+  CloudDownloadOutlined,
+  MoreOutlined,
+  PlusOutlined,
+} from '@ant-design/icons';
+import {
+  Alert,
+  App,
+  Button,
+  Dropdown,
+  Space,
+  Switch,
+  Table,
+  Tag,
+  Tooltip,
+} from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import type { MenuProps } from 'antd';
 import { useEffect, useState } from 'react';
 import { PageHeader } from '../components/PageHeader';
+import { syncPlansFromStripe } from '../api/plans.api';
 import { usePlansStore } from '../store/plans.store';
 import type { ExtPlan } from '../types/plan';
 import {
@@ -36,10 +51,31 @@ export function PlansPage() {
   const deletePlan = usePlansStore((s) => s.deletePlan);
   const [formOpen, setFormOpen] = useState(false);
   const [editing, setEditing] = useState<ExtPlan | null>(null);
+  const [syncing, setSyncing] = useState(false);
 
   useEffect(() => {
     void hydrate();
   }, [hydrate]);
+
+  /**
+   * Pulls the Stripe catalogue in. Stripe decides the money; whatever is
+   * configured here about features and trials survives the sync.
+   */
+  async function handleSyncFromStripe() {
+    setSyncing(true);
+    try {
+      const result = await syncPlansFromStripe();
+      await hydrate();
+      void message.success(
+        `Synced — ${result.created} new, ${result.updated} updated, ` +
+          `${result.deactivated} deactivated`,
+      );
+    } catch (err) {
+      void message.error(err instanceof Error ? err.message : 'Sync failed');
+    } finally {
+      setSyncing(false);
+    }
+  }
 
   const freeCount = EXT_FEATURE_KEYS.filter((key) => freeFeatures[key]).length;
   const gatingLive = freeCount < EXT_FEATURE_KEYS.length;
@@ -93,6 +129,28 @@ export function PlansPage() {
       title: 'Days',
       dataIndex: 'defaultDurationDays',
       width: 70,
+    },
+    {
+      title: 'Stripe',
+      width: 130,
+      render: (_, row) =>
+        row.stripePriceId ? (
+          <Tooltip title={row.stripePriceId}>
+            <Tag color="green">On sale</Tag>
+          </Tooltip>
+        ) : (
+          <Tooltip
+            title={
+              row.price > 0
+                ? 'No Stripe price — this plan cannot be checked out. Paste a price ID, or use Sync from Stripe.'
+                : 'Free plan; nothing to charge.'
+            }
+          >
+            <Tag color={row.price > 0 ? 'red' : 'default'}>
+              {row.price > 0 ? 'Not sellable' : 'Free'}
+            </Tag>
+          </Tooltip>
+        ),
     },
     {
       title: 'Features',
@@ -175,16 +233,25 @@ export function PlansPage() {
         title="Plans"
         subtitle="What each plan costs and what it unlocks"
         extra={
-          <Button
-            type="primary"
-            icon={<PlusOutlined />}
-            onClick={() => {
-              setEditing(null);
-              setFormOpen(true);
-            }}
-          >
-            New plan
-          </Button>
+          <Space>
+            <Button
+              icon={<CloudDownloadOutlined />}
+              loading={syncing}
+              onClick={() => void handleSyncFromStripe()}
+            >
+              Sync from Stripe
+            </Button>
+            <Button
+              type="primary"
+              icon={<PlusOutlined />}
+              onClick={() => {
+                setEditing(null);
+                setFormOpen(true);
+              }}
+            >
+              New plan
+            </Button>
+          </Space>
         }
       />
 

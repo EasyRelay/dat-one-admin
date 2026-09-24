@@ -216,6 +216,39 @@ body {
   font-size: 13px;
 }
 
+/* User drawer. Sections are separated by a heading and space rather than by
+   dividers, so the panel reads as a few blocks instead of one long ruled list. */
+.drawer-section-title {
+  margin: 0 0 10px;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+}
+
+/* Explanation on the left, the control it describes on the right. Keeps every
+   destructive button next to the sentence that says what it does. */
+.drawer-inline-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.drawer-inline-row + .drawer-inline-row {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid #e2e8f0;
+}
+
+.drawer-danger-zone {
+  padding: 14px;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  background: #fafafa;
+}
+
 .admin-content {
   padding: 20px;
   overflow: auto;
@@ -309,6 +342,9 @@ body {
 .admin-table .ant-table-tbody > tr > td {
   padding: 6px 10px !important;
   vertical-align: middle;
+  /* Tight enough that a two-line cell — an address with a name under it —
+     does not set the height of every other row on the page. */
+  line-height: 1.4;
 }
 
 .admin-table .ant-tag {

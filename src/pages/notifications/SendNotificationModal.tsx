@@ -1,7 +1,18 @@
-import { Alert, App, DatePicker, Form, Input, Modal, Select } from 'antd';
+import {
+  Alert,
+  App,
+  DatePicker,
+  Form,
+  Input,
+  Modal,
+  Radio,
+  Select,
+  Spin,
+} from 'antd';
 import dayjs from 'dayjs';
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { createNotification } from '../../api/notifications.api';
+import { listUsers } from '../../api/users.api';
 import { extractApiError } from '../../api/client';
 import { formModalProps } from '../../theme/modal';
 import type {
@@ -12,7 +23,11 @@ import type { ExtUser } from '../../types/user';
 
 const FORM_ID = 'send-notification-form';
 
+type Audience = 'all' | 'user';
+
 interface FormValues {
+  audience: Audience;
+  userId?: string;
   level: NotificationLevel;
   title: string;
   body: string;
@@ -21,26 +36,18 @@ interface FormValues {
 
 interface Props {
   open: boolean;
-  /** Fixed recipient, or null to send to every extension account. */
+  /** Fixed recipient, or null to let the admin pick everyone or one account. */
   user: ExtUser | null;
   onClose: () => void;
   onSent: (notification: ExtAdminNotification) => void;
 }
 
-/**
- * Writes a notice the extension panel will show.
- *
- * The audience is decided by where this was opened from — a user's drawer
- * sends to that account, the Notifications page sends to everyone — rather
- * than by a control inside the dialog, so "who is this going to?" cannot be
- * misread at the moment of sending.
- */
 export function SendNotificationModal({ open, user, onClose, onSent }: Props) {
   const [saving, setSaving] = useState(false);
 
   return (
     <Modal
-      title={user ? `Notify ${user.email}` : 'Notify every account'}
+      title={user ? `Notify ${user.email}` : 'Send notification'}
       open={open}
       onCancel={onClose}
       okText="Send"
@@ -61,6 +68,67 @@ export function SendNotificationModal({ open, user, onClose, onSent }: Props) {
   );
 }
 
+function UserPicker({
+  value,
+  onChange,
+}: {
+  value?: string;
+  onChange?: (value: string) => void;
+}) {
+  const { message } = App.useApp();
+  const [options, setOptions] = useState<{ value: string; label: string }[]>(
+    [],
+  );
+  const [loading, setLoading] = useState(false);
+  const timer = useRef<number | undefined>(undefined);
+  const requestId = useRef(0);
+
+  const search = (text: string) => {
+    window.clearTimeout(timer.current);
+    timer.current = window.setTimeout(async () => {
+      const id = ++requestId.current;
+      setLoading(true);
+      try {
+        const page = await listUsers({
+          search: text.trim() || undefined,
+          limit: 20,
+          removed: false,
+        });
+        if (id !== requestId.current) return;
+        setOptions(
+          page.items.map((row) => ({
+            value: row.id,
+            label: row.name ? `${row.email} (${row.name})` : row.email,
+          })),
+        );
+      } catch (err) {
+        void message.error(extractApiError(err));
+      } finally {
+        if (id === requestId.current) setLoading(false);
+      }
+    }, 300);
+  };
+
+  useEffect(() => {
+    search('');
+    return () => window.clearTimeout(timer.current);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  return (
+    <Select
+      showSearch
+      value={value}
+      onChange={onChange}
+      placeholder="Search by email or name"
+      filterOption={false}
+      onSearch={search}
+      options={options}
+      notFoundContent={loading ? <Spin size="small" /> : 'No accounts found'}
+    />
+  );
+}
+
 function SendNotificationForm({
   user,
   onClose,
@@ -69,18 +137,28 @@ function SendNotificationForm({
 }: Omit<Props, 'open'> & { onSavingChange: (saving: boolean) => void }) {
   const { message } = App.useApp();
   const [form] = Form.useForm<FormValues>();
+  const audience = Form.useWatch('audience', form) ?? 'all';
 
   async function handleSubmit(values: FormValues) {
+    const targetId = user
+      ? user.id
+      : values.audience === 'user'
+        ? (values.userId ?? null)
+        : null;
+    if (!user && values.audience === 'user' && !targetId) {
+      void message.error('Pick an account');
+      return;
+    }
     onSavingChange(true);
     try {
       const created = await createNotification({
         title: values.title.trim(),
         body: values.body.trim(),
         level: values.level,
-        userId: user ? user.id : null,
+        userId: targetId,
         expiresAt: values.expiresAt ? values.expiresAt.toISOString() : null,
       });
-      void message.success(user ? 'Notice sent' : 'Notice sent to everyone');
+      void message.success(targetId ? 'Notice sent' : 'Notice sent to everyone');
       onSent(created);
       onClose();
     } catch (err) {
@@ -96,16 +174,39 @@ function SendNotificationForm({
       form={form}
       layout="vertical"
       onFinish={handleSubmit}
-      initialValues={{ level: 'info', expiresAt: null }}
+      initialValues={{ audience: 'all', level: 'info', expiresAt: null }}
     >
       {!user && (
-        <Alert
-          type="warning"
-          showIcon
-          style={{ marginBottom: 16 }}
-          title="This goes to every extension account"
-          description="Everyone signed in to Easy DAT sees it in their panel until they open it."
-        />
+        <>
+          <Form.Item name="audience" label="Send to">
+            <Radio.Group
+              optionType="button"
+              buttonStyle="solid"
+              options={[
+                { value: 'all', label: 'Everyone' },
+                { value: 'user', label: 'One account' },
+              ]}
+            />
+          </Form.Item>
+
+          {audience === 'user' ? (
+            <Form.Item
+              name="userId"
+              label="Account"
+              rules={[{ required: true, message: 'Pick an account' }]}
+            >
+              <UserPicker />
+            </Form.Item>
+          ) : (
+            <Alert
+              type="warning"
+              showIcon
+              style={{ marginBottom: 16 }}
+              title="This goes to every Easy DAT account"
+              description="Everyone sees it in the extension panel and on their account page on the website."
+            />
+          )}
+        </>
       )}
 
       <Form.Item name="level" label="Kind">

@@ -29,3 +29,17 @@ export async function updatePlan(
 export async function deletePlan(id: string): Promise<void> {
   await api.delete(`/ext-admin/plans/${id}`);
 }
+
+export interface PlanSyncResult {
+  created: number;
+  updated: number;
+  deactivated: number;
+}
+
+/** Imports the Stripe catalogue: Stripe owns the money, we own the features. */
+export async function syncPlansFromStripe(): Promise<PlanSyncResult> {
+  const { data } = await api.post<PlanSyncResult>(
+    '/ext-admin/plans/sync-from-stripe',
+  );
+  return data;
+}

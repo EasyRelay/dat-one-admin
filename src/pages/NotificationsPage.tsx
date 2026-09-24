@@ -135,7 +135,7 @@ export function NotificationsPage() {
     <div>
       <PageHeader
         title="Notifications"
-        subtitle="Notices shown inside the extension panel"
+        subtitle="Notices shown in the extension panel and on the user's account page"
         extra={
           <Space>
             <Button icon={<ReloadOutlined />} onClick={() => void reload()}>
@@ -146,7 +146,7 @@ export function NotificationsPage() {
               icon={<NotificationOutlined />}
               onClick={() => setComposeOpen(true)}
             >
-              Notify everyone
+              Send notification
             </Button>
           </Space>
         }

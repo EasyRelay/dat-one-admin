@@ -35,6 +35,9 @@ interface FormValues {
   isActive: boolean;
   isTrialPlan: boolean;
   trialDays: number;
+  stripePriceId: string;
+  hasStripeTrial: boolean;
+  stripeTrialDays: number;
   features: ExtFeatureKey[];
 }
 
@@ -60,6 +63,9 @@ export function PlanFormModal({ open, plan, onClose }: Props) {
         isActive: plan.isActive,
         isTrialPlan: plan.trialDays !== null,
         trialDays: plan.trialDays ?? 7,
+        stripePriceId: plan.stripePriceId ?? '',
+        hasStripeTrial: plan.stripeTrialDays !== null,
+        stripeTrialDays: plan.stripeTrialDays ?? 90,
         features: EXT_FEATURE_KEYS.filter((key) => plan.features[key]),
       });
     } else {
@@ -73,6 +79,9 @@ export function PlanFormModal({ open, plan, onClose }: Props) {
         isActive: true,
         isTrialPlan: false,
         trialDays: 7,
+        stripePriceId: '',
+        hasStripeTrial: false,
+        stripeTrialDays: 90,
         features: EXT_FEATURE_KEYS.filter((key) =>
           ['darkMode', 'leftMenu', 'routeMap'].includes(key),
         ),
@@ -86,6 +95,11 @@ export function PlanFormModal({ open, plan, onClose }: Props) {
     // The switch and the number are one field on the wire: null means "not the
     // trial plan", and only one plan may hold it.
     const trialDays = values.isTrialPlan ? values.trialDays : null;
+    // Empty box = let the backend create/keep the Stripe price. A typed id
+    // adopts an existing price and suppresses the auto-sync for this save.
+    const stripePriceId = values.stripePriceId.trim() || undefined;
+    // One field on the wire: null means Stripe charges immediately.
+    const stripeTrialDays = values.hasStripeTrial ? values.stripeTrialDays : null;
 
     setSaving(true);
     try {
@@ -98,6 +112,8 @@ export function PlanFormModal({ open, plan, onClose }: Props) {
           defaultDurationDays: values.defaultDurationDays,
           isActive: values.isActive,
           trialDays,
+          stripePriceId,
+          stripeTrialDays,
           features,
         });
         void message.success('Plan updated');
@@ -111,6 +127,8 @@ export function PlanFormModal({ open, plan, onClose }: Props) {
           defaultDurationDays: values.defaultDurationDays,
           isActive: values.isActive,
           trialDays,
+          stripePriceId,
+          stripeTrialDays,
           features,
         });
         void message.success('Plan created');
@@ -201,6 +219,48 @@ export function PlanFormModal({ open, plan, onClose }: Props) {
                 rules={[{ required: true }]}
               >
                 <InputNumber min={1} max={365} style={{ width: '100%' }} />
+              </Form.Item>
+            ) : null
+          }
+        </Form.Item>
+
+        <Form.Item
+          name="stripePriceId"
+          label="Stripe price ID"
+          extra="Paste the recurring price you created in the Stripe dashboard — a plan without one cannot be checked out. Editing the amount here does NOT change what Stripe charges: create a new price there and paste it, or use Sync from Stripe."
+          rules={[
+            {
+              pattern: /^(price_[A-Za-z0-9]+)?$/,
+              message: 'Must look like price_1AbC…',
+            },
+          ]}
+        >
+          <Input placeholder="price_1UCwUa7Pzd96zx5QO6ogb9os" allowClear />
+        </Form.Item>
+
+        <Form.Item
+          name="hasStripeTrial"
+          label="Stripe trial (card taken up front)"
+          valuePropName="checked"
+          extra="Checkout shows “$0.00 due today”, keeps the customer's card, and starts billing when the trial ends. Do NOT combine with “Free trial plan” above — that one is our card-free sign-up grant, and both together give the same person two trials."
+        >
+          <Switch />
+        </Form.Item>
+        <Form.Item
+          noStyle
+          shouldUpdate={(before: FormValues, after: FormValues) =>
+            before.hasStripeTrial !== after.hasStripeTrial
+          }
+        >
+          {({ getFieldValue }) =>
+            getFieldValue('hasStripeTrial') ? (
+              <Form.Item
+                name="stripeTrialDays"
+                label="Stripe trial length (days)"
+                rules={[{ required: true }]}
+                extra="Applies to new checkouts only. Subscriptions already running keep the terms they were created with."
+              >
+                <InputNumber min={1} max={730} style={{ width: '100%' }} />
               </Form.Item>
             ) : null
           }

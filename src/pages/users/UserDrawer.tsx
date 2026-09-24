@@ -1,17 +1,16 @@
+import { NotificationOutlined } from '@ant-design/icons';
 import {
   Alert,
   App,
   Button,
   Descriptions,
-  Divider,
   Drawer,
   Form,
   Input,
-  Segmented,
   Space,
   Spin,
-  Switch,
   Table,
+  Tabs,
   Tag,
   Tooltip,
 } from 'antd';
@@ -22,6 +21,7 @@ import { listPayments } from '../../api/payments.api';
 import {
   getUser,
   logoutUserEverywhere,
+  purgeUser,
   revokePlan,
   updateUser,
 } from '../../api/users.api';
@@ -31,22 +31,18 @@ import type { ExtDevice } from '../../types/device';
 import {
   EXT_FEATURE_KEYS,
   EXT_FEATURE_LABELS,
-  type ExtFeatureKey,
   type ExtFeatureMap,
 } from '../../types/features';
 import type { ExtPayment } from '../../types/payment';
 import type { ExtUser } from '../../types/user';
 import { formatDate, formatMoney, planStatus } from '../../utils/formatters';
+import { SendNotificationModal } from '../notifications/SendNotificationModal';
+import { FeatureAccessModal } from './FeatureAccessModal';
 import { GrantPlanModal } from './GrantPlanModal';
 
-/** `undefined` = follow the plan. The plan itself only knows on/off. */
-type OverrideValue = 'inherit' | 'on' | 'off';
-
-interface AccountFormValues {
+interface DetailsFormValues {
   name: string | null;
   note: string | null;
-  isActive: boolean;
-  removed: boolean;
 }
 
 interface Props {
@@ -55,25 +51,27 @@ interface Props {
   onClose: () => void;
   /** Called whenever anything about the account changed on the server. */
   onChanged: (user: ExtUser) => void;
+  /** Called after a permanent delete — the row no longer exists anywhere. */
+  onDeleted?: (userId: string) => void;
 }
 
-function toOverrideValue(value: boolean | undefined): OverrideValue {
-  if (value === true) return 'on';
-  if (value === false) return 'off';
-  return 'inherit';
-}
-
-export function UserDrawer({ open, user, onClose, onChanged }: Props) {
+export function UserDrawer({
+  open,
+  user,
+  onClose,
+  onChanged,
+  onDeleted,
+}: Props) {
   const { message, modal } = App.useApp();
-  const [form] = Form.useForm<AccountFormValues>();
+  const [form] = Form.useForm<DetailsFormValues>();
   const plans = usePlansStore((s) => s.plans);
   const freeFeatures = usePlansStore((s) => s.freeFeatures);
 
   const [saving, setSaving] = useState(false);
-  const [overrides, setOverrides] = useState<
-    Partial<Record<ExtFeatureKey, boolean>>
-  >({});
+  const [busy, setBusy] = useState(false);
   const [grantOpen, setGrantOpen] = useState(false);
+  const [accessOpen, setAccessOpen] = useState(false);
+  const [notifyOpen, setNotifyOpen] = useState(false);
   const [payments, setPayments] = useState<ExtPayment[]>([]);
   const [devices, setDevices] = useState<ExtDevice[]>([]);
   const [relatedLoading, setRelatedLoading] = useState(false);
@@ -97,24 +95,9 @@ export function UserDrawer({ open, user, onClose, onChanged }: Props) {
     [message],
   );
 
-  // Overrides are edited locally until Save, so they are re-seeded whenever the
-  // drawer opens on a different account — during render, so the previous
-  // account's toggles never flash.
-  const shownUserId = open ? (user?.id ?? null) : null;
-  const [seededFor, setSeededFor] = useState<string | null>(null);
-  if (shownUserId !== seededFor) {
-    setSeededFor(shownUserId);
-    setOverrides({ ...(user?.featureOverrides ?? {}) });
-  }
-
   useEffect(() => {
     if (!open || !user) return;
-    form.setFieldsValue({
-      name: user.name,
-      note: user.note,
-      isActive: user.isActive,
-      removed: user.removed,
-    });
+    form.setFieldsValue({ name: user.name, note: user.note });
     // Same shape as every list screen: the spinner flips synchronously here.
     // eslint-disable-next-line react-hooks/set-state-in-effect
     void loadRelated(user.id);
@@ -124,24 +107,39 @@ export function UserDrawer({ open, user, onClose, onChanged }: Props) {
 
   const plan = plans.find((row) => row.code === user.plan) ?? null;
   // What the account would get from its plan alone, before overrides. No plan
-  // (or an expired one) falls back to the free baseline — which today is still
-  // everything, so an override is currently the only thing that changes access.
+  // (or an expired one) falls back to the free baseline.
   const planFeatures: ExtFeatureMap =
     plan && planStatus(user.planExpiresAt) !== 'expired'
       ? plan.features
       : freeFeatures;
 
-  async function handleSaveAccount(values: AccountFormValues) {
+  const status = planStatus(user.planExpiresAt);
+  const featuresOn = EXT_FEATURE_KEYS.filter((key) => user.features[key]);
+  const overrideCount = Object.keys(user.featureOverrides ?? {}).length;
+
+  async function runAction(
+    action: () => Promise<ExtUser>,
+    success: string,
+  ): Promise<void> {
+    setBusy(true);
+    try {
+      const saved = await action();
+      void message.success(success);
+      onChanged(saved);
+    } catch (err) {
+      void message.error(extractApiError(err));
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function handleSaveDetails(values: DetailsFormValues) {
     if (!user) return;
     setSaving(true);
     try {
-      const hasOverrides = Object.keys(overrides).length > 0;
       const saved = await updateUser(user.id, {
         name: values.name?.trim() || null,
         note: values.note?.trim() || null,
-        isActive: values.isActive,
-        removed: values.removed,
-        featureOverrides: hasOverrides ? overrides : null,
       });
       void message.success('Account saved');
       onChanged(saved);
@@ -168,26 +166,20 @@ export function UserDrawer({ open, user, onClose, onChanged }: Props) {
 
   function handleRevokePlan() {
     if (!user) return;
+    const id = user.id;
     modal.confirm({
       title: 'Revoke plan?',
       content:
         'The account drops to free access immediately. Payment history is kept.',
       okText: 'Revoke',
       okButtonProps: { danger: true },
-      onOk: async () => {
-        try {
-          const saved = await revokePlan(user.id);
-          void message.success('Plan revoked');
-          onChanged(saved);
-        } catch (err) {
-          void message.error(extractApiError(err));
-        }
-      },
+      onOk: () => runAction(() => revokePlan(id), 'Plan revoked'),
     });
   }
 
   function handleLogoutEverywhere() {
     if (!user) return;
+    const id = user.id;
     modal.confirm({
       title: 'Sign out every device?',
       content: 'Every install of this account has to sign in again.',
@@ -195,11 +187,108 @@ export function UserDrawer({ open, user, onClose, onChanged }: Props) {
       okButtonProps: { danger: true },
       onOk: async () => {
         try {
-          await logoutUserEverywhere(user.id);
+          await logoutUserEverywhere(id);
           void message.success('All devices signed out');
         } catch (err) {
           void message.error(extractApiError(err));
         }
+      },
+    });
+  }
+
+  function handleToggleActive() {
+    if (!user) return;
+    const { id, isActive } = user;
+    modal.confirm({
+      title: isActive ? 'Disable this account?' : 'Enable this account?',
+      content: isActive
+        ? 'Every feature switches off and the extension stops working on the next request. The account and its history stay.'
+        : 'The account can sign in and use whatever its plan grants again.',
+      okText: isActive ? 'Disable' : 'Enable',
+      okButtonProps: { danger: isActive },
+      onOk: () =>
+        runAction(
+          () => updateUser(id, { isActive: !isActive }),
+          isActive ? 'Account disabled' : 'Account enabled',
+        ),
+    });
+  }
+
+  function handleArchive() {
+    if (!user) return;
+    const id = user.id;
+    modal.confirm({
+      title: 'Archive this account?',
+      content:
+        'It moves to the Archive and is disabled — the extension stops working for it. Nothing is deleted, and you can restore it at any time.',
+      okText: 'Archive',
+      okButtonProps: { danger: true },
+      onOk: () =>
+        runAction(() => updateUser(id, { removed: true }), 'Account archived'),
+    });
+  }
+
+  function handleRestore() {
+    if (!user) return;
+    const id = user.id;
+    modal.confirm({
+      title: 'Restore this account?',
+      content:
+        'It comes back to the accounts list. It stays disabled until you enable it, so nobody regains access by accident.',
+      okText: 'Restore',
+      onOk: () =>
+        runAction(() => updateUser(id, { removed: false }), 'Account restored'),
+    });
+  }
+
+  /**
+   * The one irreversible action in the panel, so it asks for the address to be
+   * typed rather than for one more click on a button that is already there.
+   */
+  function handleDeleteForever() {
+    if (!user) return;
+    const { id, email } = user;
+    let typed = '';
+    modal.confirm({
+      title: 'Delete permanently?',
+      width: 480,
+      okText: 'Delete forever',
+      okButtonProps: { danger: true },
+      content: (
+        <div>
+          <p style={{ marginTop: 0 }}>
+            This erases the account together with its payments, devices and
+            notices. It cannot be undone, and the ledger loses the money this
+            account ever paid.
+          </p>
+          <p>
+            Type <strong>{email}</strong> to confirm:
+          </p>
+          <Input
+            placeholder={email}
+            onChange={(e) => {
+              typed = e.target.value;
+            }}
+          />
+        </div>
+      ),
+      onOk: async () => {
+        if (typed.trim().toLowerCase() !== email.toLowerCase()) {
+          void message.error('The address does not match — nothing was deleted');
+          return Promise.reject(new Error('confirmation mismatch'));
+        }
+        try {
+          const result = await purgeUser(id);
+          void message.success(
+            `${result.email} deleted — ${result.payments} payment(s), ${result.devices} device(s) removed`,
+          );
+          onDeleted?.(id);
+          onClose();
+        } catch (err) {
+          void message.error(extractApiError(err));
+          return Promise.reject(err instanceof Error ? err : new Error('failed'));
+        }
+        return undefined;
       },
     });
   }
@@ -270,35 +359,44 @@ export function UserDrawer({ open, user, onClose, onChanged }: Props) {
     {
       title: 'Last seen',
       width: 150,
-      render: (_, row) => formatDate(row.lastSeenAt),
+      render: formatDate,
+      dataIndex: 'lastSeenAt',
     },
   ];
 
-  const status = planStatus(user.planExpiresAt);
+  const overview = (
+    <Space orientation="vertical" size={20} style={{ width: '100%' }}>
+      {user.removed ? (
+        <Alert
+          type="warning"
+          showIcon
+          title="This account is archived"
+          description="It is disabled and cannot sign in. Restore it to bring it back, or delete it permanently below."
+        />
+      ) : !user.isActive ? (
+        <Alert
+          type="warning"
+          showIcon
+          title="This account is disabled"
+          description="Every feature is off regardless of its plan, and the extension stops on its next request."
+        />
+      ) : null}
 
-  return (
-    <>
-      <Drawer
-        title={user.email}
-        open={open}
-        onClose={onClose}
-        size={620}
-        destroyOnHidden
-      >
-        <Descriptions size="small" column={2} bordered>
-          <Descriptions.Item label="Name">{user.name || '—'}</Descriptions.Item>
-          <Descriptions.Item label="Signed up via">
-            <Tag>{user.createdVia}</Tag>
-          </Descriptions.Item>
-          <Descriptions.Item label="Created">
-            {formatDate(user.createdAt)}
-          </Descriptions.Item>
-          <Descriptions.Item label="Last seen">
-            {formatDate(user.lastSeenAt)}
-          </Descriptions.Item>
-        </Descriptions>
+      <Descriptions size="small" column={2} bordered>
+        <Descriptions.Item label="Name">{user.name || '—'}</Descriptions.Item>
+        <Descriptions.Item label="Signed up via">
+          <Tag>{user.createdVia}</Tag>
+        </Descriptions.Item>
+        <Descriptions.Item label="Created">
+          {formatDate(user.createdAt)}
+        </Descriptions.Item>
+        <Descriptions.Item label="Last seen">
+          {formatDate(user.lastSeenAt)}
+        </Descriptions.Item>
+      </Descriptions>
 
-        <Divider titlePlacement="start">Plan</Divider>
+      <section>
+        <p className="drawer-section-title">Plan</p>
         <Space orientation="vertical" style={{ width: '100%' }} size={12}>
           <Space wrap>
             {user.plan ? (
@@ -324,127 +422,216 @@ export function UserDrawer({ open, user, onClose, onChanged }: Props) {
               </Tag>
             )}
           </Space>
-          <Space>
+          <Space wrap>
             <Button type="primary" onClick={() => setGrantOpen(true)}>
               {user.plan ? 'Renew or change plan' : 'Grant plan'}
             </Button>
             {user.plan && (
-              <Button danger onClick={handleRevokePlan}>
+              <Button danger onClick={handleRevokePlan} disabled={busy}>
                 Revoke plan
               </Button>
             )}
           </Space>
         </Space>
+      </section>
 
-        <Divider titlePlacement="start">Feature access</Divider>
-        {!user.isActive || user.removed ? (
-          <Alert
-            type="warning"
-            showIcon
-            style={{ marginBottom: 12 }}
-            title="Account is disabled — every feature is off regardless of the plan."
-          />
-        ) : null}
-        <div className="feature-grid">
-          {EXT_FEATURE_KEYS.map((key) => {
-            const override = overrides[key];
-            const effective =
-              !user.isActive || user.removed
-                ? false
-                : (override ?? planFeatures[key]);
-            return (
-              <div className="feature-row" key={key}>
-                <span className="feature-name">
-                  {EXT_FEATURE_LABELS[key]}
-                  <Tooltip
-                    title={
-                      override === undefined
-                        ? 'Follows the plan'
-                        : 'Overridden for this account'
-                    }
-                  >
-                    <Tag
-                      color={effective ? 'green' : 'default'}
-                      style={{ marginLeft: 8 }}
-                    >
-                      {effective ? 'on' : 'off'}
-                    </Tag>
-                  </Tooltip>
-                </span>
-                <Segmented
-                  size="small"
-                  value={toOverrideValue(override)}
-                  options={[
-                    { value: 'inherit', label: 'Plan' },
-                    { value: 'on', label: 'On' },
-                    { value: 'off', label: 'Off' },
-                  ]}
-                  onChange={(value) => {
-                    setOverrides((prev) => {
-                      const next = { ...prev };
-                      if (value === 'inherit') delete next[key];
-                      else next[key] = value === 'on';
-                      return next;
-                    });
-                  }}
-                />
-              </div>
-            );
-          })}
+      <section>
+        <p className="drawer-section-title">Feature access</p>
+        <div className="drawer-inline-row">
+          <Space size={6} wrap>
+            <Tooltip
+              title={
+                featuresOn.length
+                  ? featuresOn.map((key) => EXT_FEATURE_LABELS[key]).join(', ')
+                  : 'No features'
+              }
+            >
+              <Tag color={featuresOn.length ? 'green' : 'red'}>
+                {featuresOn.length}/{EXT_FEATURE_KEYS.length} on
+              </Tag>
+            </Tooltip>
+            {overrideCount > 0 ? (
+              <Tag color="purple">{overrideCount} custom</Tag>
+            ) : (
+              <span className="cell-sub">follows the plan</span>
+            )}
+          </Space>
+          <Button onClick={() => setAccessOpen(true)}>Manage access</Button>
         </div>
+      </section>
 
-        <Divider titlePlacement="start">Account</Divider>
-        <Form form={form} layout="vertical" onFinish={handleSaveAccount}>
+      <section>
+        <p className="drawer-section-title">Notifications</p>
+        <div className="drawer-inline-row">
+          <span className="cell-sub">
+            Send a message only this account sees, in the extension panel and
+            on its account page.
+          </span>
+          <Button
+            icon={<NotificationOutlined />}
+            onClick={() => setNotifyOpen(true)}
+            disabled={user.removed}
+          >
+            Send notification
+          </Button>
+        </div>
+      </section>
+
+      <section>
+        <p className="drawer-section-title">Details</p>
+        <Form form={form} layout="vertical" onFinish={handleSaveDetails}>
           <Form.Item name="name" label="Name">
             <Input />
           </Form.Item>
           <Form.Item name="note" label="Admin note">
             <Input.TextArea rows={2} />
           </Form.Item>
-          <Space size={32}>
-            <Form.Item name="isActive" label="Active" valuePropName="checked">
-              <Switch />
-            </Form.Item>
-            <Form.Item name="removed" label="Removed" valuePropName="checked">
-              <Switch />
-            </Form.Item>
-          </Space>
-          <Form.Item>
-            <Space>
-              <Button type="primary" htmlType="submit" loading={saving}>
-                Save account
-              </Button>
-              <Button danger onClick={handleLogoutEverywhere}>
-                Sign out everywhere
-              </Button>
-            </Space>
+          <Form.Item style={{ marginBottom: 0 }}>
+            <Button type="primary" htmlType="submit" loading={saving}>
+              Save details
+            </Button>
           </Form.Item>
         </Form>
+      </section>
 
-        <Divider titlePlacement="start">Payments</Divider>
-        <Spin spinning={relatedLoading}>
-          <Table
-            className="admin-table"
-            size="small"
-            rowKey="id"
-            columns={paymentColumns}
-            dataSource={payments}
-            pagination={false}
-            locale={{ emptyText: 'No payments yet' }}
-          />
+      <section>
+        <p className="drawer-section-title">Account status</p>
+        <div className="drawer-danger-zone">
+          {user.removed ? (
+            <>
+              <div className="drawer-inline-row">
+                <span className="cell-sub">
+                  Bring this account back to the accounts list. It stays
+                  disabled until you enable it.
+                </span>
+                <Button type="primary" onClick={handleRestore} disabled={busy}>
+                  Restore
+                </Button>
+              </div>
+              <div className="drawer-inline-row">
+                <span className="cell-sub">
+                  Erase the account, its payments, devices and notices. This
+                  cannot be undone.
+                </span>
+                <Button danger type="primary" onClick={handleDeleteForever}>
+                  Delete permanently
+                </Button>
+              </div>
+            </>
+          ) : (
+            <>
+              <div className="drawer-inline-row">
+                <span className="cell-sub">
+                  {user.isActive
+                    ? 'Switch the account off without archiving it — useful while something is being sorted out.'
+                    : 'Let this account sign in and use its plan again.'}
+                </span>
+                <Button onClick={handleToggleActive} disabled={busy}>
+                  {user.isActive ? 'Disable' : 'Enable'}
+                </Button>
+              </div>
+              <div className="drawer-inline-row">
+                <span className="cell-sub">
+                  Move the account to the Archive. It is disabled there and can
+                  be restored or deleted for good.
+                </span>
+                <Button danger onClick={handleArchive} disabled={busy}>
+                  Archive
+                </Button>
+              </div>
+            </>
+          )}
+          <div className="drawer-inline-row">
+            <span className="cell-sub">
+              Invalidate every token, so all installs have to sign in again.
+            </span>
+            <Button danger onClick={handleLogoutEverywhere}>
+              Sign out everywhere
+            </Button>
+          </div>
+        </div>
+      </section>
+    </Space>
+  );
 
-          <Divider titlePlacement="start">Devices</Divider>
-          <Table
-            className="admin-table"
-            size="small"
-            rowKey="id"
-            columns={deviceColumns}
-            dataSource={devices}
-            pagination={false}
-            locale={{ emptyText: 'No devices yet' }}
-          />
-        </Spin>
+  return (
+    <>
+      <Drawer
+        title={
+          <Space size={8} wrap>
+            <span>{user.email}</span>
+            {user.removed ? (
+              <Tag>archived</Tag>
+            ) : (
+              <Tag color={user.isActive ? 'green' : 'red'}>
+                {user.isActive ? 'active' : 'disabled'}
+              </Tag>
+            )}
+          </Space>
+        }
+        open={open}
+        onClose={onClose}
+        size={620}
+        destroyOnHidden
+      >
+        {/* Tabs rather than one long scroll: payments and devices are reference
+            material, and unfolding all three at once buried the controls. */}
+        <Tabs
+          defaultActiveKey="overview"
+          items={[
+            { key: 'overview', label: 'Overview', children: overview },
+            {
+              key: 'payments',
+              label: `Payments${payments.length ? ` (${payments.length})` : ''}`,
+              children: (
+                <Spin spinning={relatedLoading}>
+                  <Table
+                    className="admin-table"
+                    size="small"
+                    rowKey="id"
+                    columns={paymentColumns}
+                    dataSource={payments}
+                    pagination={false}
+                    locale={{ emptyText: 'No payments yet' }}
+                  />
+                </Spin>
+              ),
+            },
+            {
+              key: 'devices',
+              label: `Devices${devices.length ? ` (${devices.length})` : ''}`,
+              children: (
+                <Spin spinning={relatedLoading}>
+                  <Table
+                    className="admin-table"
+                    size="small"
+                    rowKey="id"
+                    columns={deviceColumns}
+                    dataSource={devices}
+                    pagination={false}
+                    locale={{ emptyText: 'No devices yet' }}
+                  />
+                </Spin>
+              ),
+            },
+          ]}
+        />
       </Drawer>
+
+      <FeatureAccessModal
+        open={accessOpen}
+        user={user}
+        planFeatures={planFeatures}
+        onClose={() => setAccessOpen(false)}
+        onSaved={onChanged}
+      />
+
+      <SendNotificationModal
+        open={notifyOpen}
+        user={user}
+        onClose={() => setNotifyOpen(false)}
+        onSent={() => undefined}
+      />
 
       <GrantPlanModal
         open={grantOpen}
