@@ -13,3 +13,39 @@
 [File]: dat-one-admin/src/pages/users/UserDrawer.tsx
 [Line]: 464-479, 629-634
 [Comment]: "Send notification" in the drawer sends a notice only this account sees (extension panel + account page on easydat website). Disabled for archived accounts.
+
+[File]: dat-one-admin/src/pages/UsersPage.tsx
+[Line]: 131-140 (Account column)
+[Comment]: Account has no fixed width, so it takes whatever room the fixed columns leave instead of the browser spreading the spare width unevenly over every column. It always renders two lines (email, then name or "—"), so every row has the same height whether or not the account has a name.
+
+[File]: dat-one-admin/src/pages/UsersPage.tsx
+[Line]: 142-156 (Plan), 216 (Days left)
+[Comment]: A plan that ends more than 10 years from now (the free plan is granted for 100 years) shows "lifetime" instead of "until 9/21/2126" and "36500 days". Accounts without a plan show a quiet "No plan" text instead of a grey tag.
+
+[File]: dat-one-admin/src/pages/UsersPage.tsx
+[Line]: 249-259 (Last seen)
+[Comment]: Short date and time without seconds (e.g. 10/15/26, 3:28 PM); the full timestamp is in the tooltip.
+
+[File]: dat-one-admin/src/utils/formatters.ts
+[Line]: 15-28 (formatDayTime, isLifetime)
+[Comment]: formatDayTime: date + time without seconds for table cells. isLifetime: true when a plan ends more than 10 years from now.
+
+[File]: dat-one-admin/src/index.css
+[Line]: 190-202 (.cell-two-line, .cell-main)
+[Comment]: Two-line table cell: both lines are cut with an ellipsis instead of wrapping, and the main line (email) is medium weight.
+
+[File]: dat-one-admin/src/pages/UsersPage.tsx
+[Line]: column widths (Account 25%, Plan 20%, Last payment 17%, Days left 11%, Status 10%, Last seen 17%), scroll.x 1100, users-table class
+[Comment]: Supersedes the "Account has no fixed width" note above. Columns are sized in percentages so the table is spread across the full width instead of the email column taking all spare room and pushing the rest to the right edge. Below 1100px the table scrolls sideways rather than squeezing.
+
+[File]: dat-one-admin/src/index.css
+[Line]: .admin-table.users-table rules (after .admin-table code)
+[Comment]: Users table only: larger text (14px body, 13px header and secondary lines, 12px tags) and roomier cell padding, since the rows have the space for it. Other admin tables keep the compact 13px style.
+
+[File]: dat-one-admin/src/index.css
+[Line]: .drawer-section-title, .drawer-overview (user drawer)
+[Comment]: Section headings in the user drawer (Plan, Feature access, Toll calculator today, Notifications, Details) are 13px bold in the main text colour with a thin rule under them, so they stand apart from the content instead of looking like another grey line. The overview table labels are semi-bold and do not wrap; values stay on one line.
+
+[File]: dat-one-admin/src/pages/users/UserDrawer.tsx
+[Line]: overview Descriptions (Created, Last seen) and the plan "until" tag
+[Comment]: Dates use the short form without seconds (full timestamp in the tooltip), so "9/7/2026, 2:45:20 PM" no longer wraps onto two lines. A plan ending more than 10 years out shows "lifetime", same as the users table.

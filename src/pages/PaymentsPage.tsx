@@ -92,6 +92,7 @@ export function PaymentsPage() {
         <Space size={4} wrap>
           <Tag color="cyan">{row.plan}</Tag>
           {row.kind === "trial" && <Tag color="purple">trial</Tag>}
+          {row.kind === "free" && <Tag color="green">free</Tag>}
         </Space>
       ),
     },

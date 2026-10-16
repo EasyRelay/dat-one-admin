@@ -2,8 +2,8 @@ import type { Currency } from './plan';
 
 export type PaymentStatus = 'pending' | 'paid' | 'failed' | 'refunded';
 
-/** Why the account was given a plan. A trial is a zero-amount row. */
-export type GrantKind = 'sale' | 'trial';
+/** Why the account was given a plan. A trial or a free start is a zero-amount row. */
+export type GrantKind = 'sale' | 'trial' | 'free';
 
 export interface ExtPayment {
   id: string;

@@ -59,6 +59,27 @@ export async function logoutUserEverywhere(id: string): Promise<void> {
   await api.post(`/ext-admin/users/${id}/logout-everywhere`);
 }
 
+/** Today's toll calculations: distinct lanes counted against the daily limit. */
+export interface TollUsage {
+  /** Usage day (Asia/Tashkent), YYYY-MM-DD. */
+  day: string;
+  used: number;
+  limit: number;
+  /** "DALLAS, TX → ATLANTA, GA" */
+  lanes: string[];
+}
+
+export async function getUserTollUsage(id: string): Promise<TollUsage> {
+  const { data } = await api.get<TollUsage>(`/ext-admin/users/${id}/tolls`);
+  return data;
+}
+
+/** Clears today's toll count (and the per-minute one); returns the fresh usage. */
+export async function resetUserTollUsage(id: string): Promise<TollUsage> {
+  const { data } = await api.delete<TollUsage>(`/ext-admin/users/${id}/tolls`);
+  return data;
+}
+
 export interface PurgeResult {
   email: string;
   payments: number;

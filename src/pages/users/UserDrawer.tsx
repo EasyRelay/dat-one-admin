@@ -20,10 +20,13 @@ import { listDevices } from '../../api/devices.api';
 import { listPayments } from '../../api/payments.api';
 import {
   getUser,
+  getUserTollUsage,
   logoutUserEverywhere,
   purgeUser,
+  resetUserTollUsage,
   revokePlan,
   updateUser,
+  type TollUsage,
 } from '../../api/users.api';
 import { extractApiError } from '../../api/client';
 import { usePlansStore } from '../../store/plans.store';
@@ -35,7 +38,13 @@ import {
 } from '../../types/features';
 import type { ExtPayment } from '../../types/payment';
 import type { ExtUser } from '../../types/user';
-import { formatDate, formatMoney, planStatus } from '../../utils/formatters';
+import {
+  formatDate,
+  formatDayTime,
+  formatMoney,
+  isLifetime,
+  planStatus,
+} from '../../utils/formatters';
 import { SendNotificationModal } from '../notifications/SendNotificationModal';
 import { FeatureAccessModal } from './FeatureAccessModal';
 import { GrantPlanModal } from './GrantPlanModal';
@@ -74,18 +83,22 @@ export function UserDrawer({
   const [notifyOpen, setNotifyOpen] = useState(false);
   const [payments, setPayments] = useState<ExtPayment[]>([]);
   const [devices, setDevices] = useState<ExtDevice[]>([]);
+  const [tollUsage, setTollUsage] = useState<TollUsage | null>(null);
   const [relatedLoading, setRelatedLoading] = useState(false);
 
   const loadRelated = useCallback(
     async (userId: string) => {
       setRelatedLoading(true);
       try {
-        const [paymentPage, devicePage] = await Promise.all([
+        const [paymentPage, devicePage, tolls] = await Promise.all([
           listPayments({ userId, limit: 20 }),
           listDevices({ userId, limit: 20 }),
+          // Optional: an older backend without the endpoint must not break the drawer.
+          getUserTollUsage(userId).catch(() => null),
         ]);
         setPayments(paymentPage.items);
         setDevices(devicePage.items);
+        setTollUsage(tolls);
       } catch (err) {
         void message.error(extractApiError(err));
       } finally {
@@ -189,6 +202,24 @@ export function UserDrawer({
         try {
           await logoutUserEverywhere(id);
           void message.success('All devices signed out');
+        } catch (err) {
+          void message.error(extractApiError(err));
+        }
+      },
+    });
+  }
+
+  function handleResetTolls() {
+    if (!user || !tollUsage) return;
+    const id = user.id;
+    modal.confirm({
+      title: 'Reset toll limit?',
+      content: `Today's count (${tollUsage.used}/${tollUsage.limit}) goes back to 0, so the account can calculate ${tollUsage.limit} more lanes today.`,
+      okText: 'Reset',
+      onOk: async () => {
+        try {
+          setTollUsage(await resetUserTollUsage(id));
+          void message.success('Toll limit reset');
         } catch (err) {
           void message.error(extractApiError(err));
         }
@@ -315,6 +346,7 @@ export function UserDrawer({
         <Space size={4} wrap>
           <span>{row.plan}</span>
           {row.kind === 'trial' && <Tag color="purple">trial</Tag>}
+          {row.kind === 'free' && <Tag color="green">free</Tag>}
         </Space>
       ),
     },
@@ -382,16 +414,16 @@ export function UserDrawer({
         />
       ) : null}
 
-      <Descriptions size="small" column={2} bordered>
+      <Descriptions size="small" column={2} bordered className="drawer-overview">
         <Descriptions.Item label="Name">{user.name || '—'}</Descriptions.Item>
         <Descriptions.Item label="Signed up via">
           <Tag>{user.createdVia}</Tag>
         </Descriptions.Item>
         <Descriptions.Item label="Created">
-          {formatDate(user.createdAt)}
+          <span title={formatDate(user.createdAt)}>{formatDayTime(user.createdAt)}</span>
         </Descriptions.Item>
         <Descriptions.Item label="Last seen">
-          {formatDate(user.lastSeenAt)}
+          <span title={formatDate(user.lastSeenAt)}>{formatDayTime(user.lastSeenAt)}</span>
         </Descriptions.Item>
       </Descriptions>
 
@@ -418,7 +450,9 @@ export function UserDrawer({
               >
                 {status === 'never'
                   ? 'no end date'
-                  : `until ${formatDate(user.planExpiresAt)}`}
+                  : isLifetime(user.planExpiresAt)
+                    ? 'lifetime'
+                    : `until ${formatDayTime(user.planExpiresAt)}`}
               </Tag>
             )}
           </Space>
@@ -458,6 +492,50 @@ export function UserDrawer({
           </Space>
           <Button onClick={() => setAccessOpen(true)}>Manage access</Button>
         </div>
+      </section>
+
+      <section>
+        <p className="drawer-section-title">Toll calculator today</p>
+        {tollUsage ? (
+          <div className="drawer-inline-row">
+            <Space size={6} wrap>
+              <Tooltip
+                title={
+                  tollUsage.lanes.length ? (
+                    <div>
+                      {tollUsage.lanes.map((lane) => (
+                        <div key={lane}>{lane}</div>
+                      ))}
+                    </div>
+                  ) : (
+                    'Nothing calculated today'
+                  )
+                }
+              >
+                <Tag
+                  color={
+                    tollUsage.used >= tollUsage.limit
+                      ? 'red'
+                      : tollUsage.used > 0
+                        ? 'blue'
+                        : 'default'
+                  }
+                >
+                  {tollUsage.used}/{tollUsage.limit} used
+                </Tag>
+              </Tooltip>
+              <span className="cell-sub">
+                {Math.max(0, tollUsage.limit - tollUsage.used)} left ·{' '}
+                {tollUsage.day} (Tashkent day)
+              </span>
+            </Space>
+            <Button onClick={handleResetTolls} disabled={tollUsage.used === 0}>
+              Reset limit
+            </Button>
+          </div>
+        ) : (
+          <span className="cell-sub">{relatedLoading ? 'Loading…' : '—'}</span>
+        )}
       </section>
 
       <section>

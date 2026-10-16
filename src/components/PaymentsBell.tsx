@@ -110,7 +110,9 @@ export function PaymentsBell() {
                       <span className="bell-amount">
                         {row.kind === 'trial'
                           ? 'free trial'
-                          : formatMoney(row.amount, row.currency)}
+                          : row.kind === 'free'
+                            ? 'free plan'
+                            : formatMoney(row.amount, row.currency)}
                       </span>
                     </div>
                     <div className="bell-list-sub">

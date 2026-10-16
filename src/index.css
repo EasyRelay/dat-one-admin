@@ -187,6 +187,20 @@ body {
   font-size: 12px;
 }
 
+.cell-two-line {
+  min-width: 0;
+}
+
+.cell-two-line > div {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.cell-main {
+  font-weight: 500;
+}
+
 .admin-table--clickable .ant-table-tbody > tr {
   cursor: pointer;
 }
@@ -219,12 +233,24 @@ body {
 /* User drawer. Sections are separated by a heading and space rather than by
    dividers, so the panel reads as a few blocks instead of one long ruled list. */
 .drawer-section-title {
-  margin: 0 0 10px;
-  font-size: 12px;
-  font-weight: 600;
-  letter-spacing: 0.06em;
+  margin: 0 0 12px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid #e2e8f0;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
   text-transform: uppercase;
-  color: var(--text-secondary);
+  color: var(--text-primary);
+}
+
+.drawer-overview .ant-descriptions-item-label {
+  width: 110px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.drawer-overview .ant-descriptions-item-content {
+  white-space: nowrap;
 }
 
 /* Explanation on the left, the control it describes on the right. Keeps every
@@ -356,6 +382,29 @@ body {
 
 .admin-table code {
   font-size: 12px;
+}
+
+.admin-table.users-table .ant-table {
+  font-size: 14px;
+}
+
+.admin-table.users-table .ant-table-thead > tr > th {
+  padding: 10px 14px !important;
+  font-size: 13px;
+}
+
+.admin-table.users-table .ant-table-tbody > tr > td {
+  padding: 9px 14px !important;
+}
+
+.admin-table.users-table .cell-sub {
+  font-size: 13px;
+}
+
+.admin-table.users-table .ant-tag {
+  font-size: 12px;
+  line-height: 20px;
+  padding-inline: 8px;
 }
 
 .stat-card {

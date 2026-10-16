@@ -12,6 +12,21 @@ export function formatDate(value: string | null | undefined): string {
  * the cell onto a second line, which is what made the rows tall. The drawer
  * still shows the full timestamp for anyone who needs it.
  */
+export function formatDayTime(value: string | null | undefined): string {
+  if (!value) return '—';
+  const d = new Date(value);
+  if (Number.isNaN(d.getTime())) return '—';
+  return d.toLocaleString(undefined, { dateStyle: 'short', timeStyle: 'short' });
+}
+
+const LIFETIME_MS = 10 * 365 * 24 * 60 * 60 * 1000;
+
+export function isLifetime(expiresAt: string | null | undefined): boolean {
+  if (!expiresAt) return false;
+  const time = new Date(expiresAt).getTime();
+  return !Number.isNaN(time) && time - Date.now() > LIFETIME_MS;
+}
+
 export function formatDay(value: string | null | undefined): string {
   if (!value) return '—';
   const d = new Date(value);

@@ -21,7 +21,9 @@ import {
   daysUntil,
   formatDate,
   formatDay,
+  formatDayTime,
   formatMoney,
+  isLifetime,
   planStatus,
 } from '../utils/formatters';
 import { GrantPlanModal } from './users/GrantPlanModal';
@@ -127,22 +129,31 @@ export function UsersPage() {
   const columns: ColumnsType<ExtUser> = [
     {
       title: 'Account',
-      ellipsis: true,
-      width: 220,
+      width: '25%',
       sorter: true,
       sortOrder: sort.field === 'email' ? sort.order : null,
       render: (_, row) => (
-        <div>
-          <div>{row.email}</div>
-          {row.name ? <div className="cell-sub">{row.name}</div> : null}
+        <div className="cell-two-line">
+          <div className="cell-main">{row.email}</div>
+          <div className="cell-sub">{row.name || '—'}</div>
         </div>
       ),
     },
     {
       title: 'Plan',
-      width: 215,
+      width: '20%',
       render: (_, row) => {
-        if (!row.plan) return <Tag>No plan</Tag>;
+        if (!row.plan) return <span className="cell-sub">No plan</span>;
+        if (isLifetime(row.planExpiresAt)) {
+          return (
+            <Space size={6} wrap={false}>
+              <Tag color={PLAN_TAG_COLOR} style={{ marginInlineEnd: 0 }}>
+                {row.plan}
+              </Tag>
+              <span className="cell-sub">lifetime</span>
+            </Space>
+          );
+        }
         const state = planStatus(row.planExpiresAt);
         // One line: the plan, then when it ends as plain text. Two stacked
         // tags made every row twice as tall for a date that is not urgent
@@ -174,7 +185,7 @@ export function UsersPage() {
     },
     {
       title: 'Last payment',
-      width: 155,
+      width: '17%',
       render: (_, row) => {
         const payment = row.latestPayment;
         if (!payment) return <span className="cell-sub">—</span>;
@@ -183,6 +194,10 @@ export function UsersPage() {
             {payment.kind === 'trial' ? (
               <Tag color="purple" style={{ marginInlineEnd: 0 }}>
                 free trial
+              </Tag>
+            ) : payment.kind === 'free' ? (
+              <Tag color="green" style={{ marginInlineEnd: 0 }}>
+                free plan
               </Tag>
             ) : (
               <span>{formatMoney(payment.amount, payment.currency)}</span>
@@ -194,11 +209,12 @@ export function UsersPage() {
     },
     {
       title: 'Days left',
-      width: 110,
+      width: '11%',
       sorter: true,
       sortOrder: sort.field === 'planExpiresAt' ? sort.order : null,
       render: (_, row) => {
         if (!row.plan) return <span className="cell-sub">—</span>;
+        if (isLifetime(row.planExpiresAt)) return <span>lifetime</span>;
         const left = daysUntil(row.planExpiresAt);
         if (left === null) return <span className="cell-sub">no end date</span>;
 
@@ -217,7 +233,7 @@ export function UsersPage() {
     },
     {
       title: 'Status',
-      width: 120,
+      width: '10%',
       render: (_, row) => {
         if (row.removed) return <Tag>archived</Tag>;
         if (!row.isActive) return <Tag color="red">disabled</Tag>;
@@ -233,10 +249,14 @@ export function UsersPage() {
     {
       title: 'Last seen',
       dataIndex: 'lastSeenAt',
-      width: 140,
+      width: '17%',
       sorter: true,
       sortOrder: sort.field === 'lastSeenAt' ? sort.order : null,
-      render: formatDate,
+      render: (value: string | null) => (
+        <span title={formatDate(value)} style={{ whiteSpace: 'nowrap' }}>
+          {formatDayTime(value)}
+        </span>
+      ),
     },
   ];
 
@@ -335,14 +355,14 @@ export function UsersPage() {
         </Space>
 
         <Table
-          className="admin-table admin-table--clickable"
+          className="admin-table admin-table--clickable users-table"
           size="small"
           rowKey="id"
           loading={loading}
           columns={columns}
           dataSource={items}
           tableLayout="fixed"
-          scroll={items.length ? { x: 960 } : undefined}
+          scroll={items.length ? { x: 1100 } : undefined}
           onRow={(row) => ({ onClick: () => setSelected(row) })}
           onChange={(_pagination, _filters, sorter) => {
             // Back to page one: staying on page 4 of the old order shows a
