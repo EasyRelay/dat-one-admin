@@ -2,9 +2,12 @@ import { createBrowserRouter, Navigate } from 'react-router-dom';
 import { AppLayout } from './layouts/AppLayout';
 import { ProtectedRoute } from './components/ProtectedRoute';
 import { LoginPage } from './pages/LoginPage';
+import { HandoffPage } from './pages/HandoffPage';
+import { HANDOFF_PATH } from './config/admin-panels';
 import { DashboardPage } from './pages/DashboardPage';
 import { UsersPage } from './pages/UsersPage';
 import { DevicesPage } from './pages/DevicesPage';
+import { TollBrowsersPage } from './pages/TollBrowsersPage';
 import { PlansPage } from './pages/PlansPage';
 import { PaymentsPage } from './pages/PaymentsPage';
 import { PromoCodesPage } from './pages/PromoCodesPage';
@@ -16,6 +19,10 @@ export const router = createBrowserRouter([
     element: <LoginPage />,
   },
   {
+    path: HANDOFF_PATH,
+    element: <HandoffPage />,
+  },
+  {
     element: <ProtectedRoute />,
     children: [
       {
@@ -24,6 +31,7 @@ export const router = createBrowserRouter([
           { index: true, element: <DashboardPage /> },
           { path: 'users', element: <UsersPage /> },
           { path: 'devices', element: <DevicesPage /> },
+          { path: 'tollguru', element: <TollBrowsersPage /> },
           { path: 'plans', element: <PlansPage /> },
           { path: 'payments', element: <PaymentsPage /> },
           { path: 'promo-codes', element: <PromoCodesPage /> },

@@ -4,6 +4,7 @@ import { Layout, Menu, Button, Tooltip } from 'antd';
 import {
   DashboardOutlined,
   DollarOutlined,
+  CarOutlined,
   CreditCardOutlined,
   TeamOutlined,
   LaptopOutlined,
@@ -14,6 +15,7 @@ import {
   TagsOutlined,
 } from '@ant-design/icons';
 import { PaymentsBell } from '../components/PaymentsBell';
+import { SwitchAdminPanelButton } from '../components/SwitchAdminPanelButton';
 import { useAuthStore } from '../store/auth.store';
 import { emailFromToken } from '../utils/jwt';
 
@@ -28,6 +30,7 @@ const NAV_ITEMS = [
   { key: '/', icon: <DashboardOutlined />, label: 'Dashboard' },
   { key: '/users', icon: <TeamOutlined />, label: 'Users' },
   { key: '/devices', icon: <LaptopOutlined />, label: 'Devices' },
+  { key: '/tollguru', icon: <CarOutlined />, label: 'TollGuru' },
   { key: '/plans', icon: <CreditCardOutlined />, label: 'Plans' },
   { key: '/payments', icon: <DollarOutlined />, label: 'Payments' },
   { key: '/promo-codes', icon: <TagsOutlined />, label: 'Promo codes' },
@@ -42,6 +45,7 @@ const PAGE_TITLES: Record<string, string> = {
   '/': 'Dashboard',
   '/users': 'Users',
   '/devices': 'Devices',
+  '/tollguru': 'TollGuru',
   '/plans': 'Plans',
   '/payments': 'Payments',
   '/promo-codes': 'Promo codes',
@@ -108,6 +112,7 @@ export function AppLayout() {
             <h2>{PAGE_TITLES[selectedKey] ?? 'Admin'}</h2>
           </div>
           <div className="admin-header-right">
+            <SwitchAdminPanelButton />
             <PaymentsBell />
             {adminEmail && <span className="admin-header-user">{adminEmail}</span>}
             <Tooltip title="Sign out">
