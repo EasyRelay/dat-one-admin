@@ -11,15 +11,21 @@ import {
   LogoutOutlined,
   MenuFoldOutlined,
   MenuUnfoldOutlined,
+  MoonOutlined,
+  SunOutlined,
   NotificationOutlined,
   TagsOutlined,
 } from '@ant-design/icons';
 import { PaymentsBell } from '../components/PaymentsBell';
 import { SwitchAdminPanelButton } from '../components/SwitchAdminPanelButton';
 import { useAuthStore } from '../store/auth.store';
+import { useThemeStore } from '../store/theme.store';
 import { emailFromToken } from '../utils/jwt';
 
 const { Sider, Header, Content } = Layout;
+
+// Icons only when collapsed — antd's default 80px left a wide empty rail.
+const SIDEBAR_COLLAPSED_WIDTH = 56;
 
 /**
  * Ordered the way the work flows: who is signed up, what they run it on, what
@@ -58,6 +64,8 @@ export function AppLayout() {
   const logout = useAuthStore((state) => state.logout);
   const token = useAuthStore((state) => state.token);
   const [collapsed, setCollapsed] = useState(false);
+  const themeMode = useThemeStore((state) => state.mode);
+  const toggleTheme = useThemeStore((state) => state.toggle);
 
   const adminEmail = emailFromToken(token);
 
@@ -77,6 +85,7 @@ export function AppLayout() {
         onCollapse={setCollapsed}
         trigger={null}
         width={220}
+        collapsedWidth={SIDEBAR_COLLAPSED_WIDTH}
       >
         <div
           className={`admin-sidebar-logo${collapsed ? ' admin-sidebar-logo--collapsed' : ''}`}
@@ -113,6 +122,14 @@ export function AppLayout() {
           </div>
           <div className="admin-header-right">
             <SwitchAdminPanelButton />
+            <Tooltip title={themeMode === 'dark' ? 'Light mode' : 'Dark mode'}>
+              <Button
+                type="text"
+                aria-label="Toggle dark mode"
+                icon={themeMode === 'dark' ? <SunOutlined /> : <MoonOutlined />}
+                onClick={toggleTheme}
+              />
+            </Tooltip>
             <PaymentsBell />
             {adminEmail && <span className="admin-header-user">{adminEmail}</span>}
             <Tooltip title="Sign out">

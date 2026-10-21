@@ -9,6 +9,44 @@
   --text-secondary: #64748b;
   --accent: #0f766e;
   --shadow-card: 0 1px 2px rgba(15, 23, 42, 0.05), 0 8px 24px rgba(15, 23, 42, 0.06);
+  --header-bg: #ffffff;
+  --line: #e2e8f0;
+  --muted-bg: #f1f5f9;
+  --soft-bg: #fafafa;
+  --accent-tint: #ecfdf5;
+  --login-panel-bg: rgba(238, 242, 246, 0.92);
+}
+
+/* Dark mode — toggled from the header (theme.store.ts sets data-theme). */
+:root[data-theme='dark'] {
+  --sidebar-bg: #070d18;
+  --page-bg: #0b1220;
+  --card-bg: #111a2b;
+  --text-primary: #e2e8f0;
+  --text-secondary: #94a3b8;
+  --accent: #2dd4bf;
+  --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.4), 0 8px 24px rgba(0, 0, 0, 0.25);
+  --header-bg: #111a2b;
+  --line: #243044;
+  --muted-bg: #1b2638;
+  --soft-bg: #152033;
+  --accent-tint: rgba(45, 212, 191, 0.12);
+  --login-panel-bg: rgba(11, 18, 32, 0.92);
+}
+
+/* Recharts ships light-only defaults. */
+.recharts-cartesian-axis-tick-value {
+  fill: var(--text-secondary);
+}
+
+.recharts-cartesian-grid line,
+.recharts-cartesian-axis-line {
+  stroke: var(--line);
+}
+
+.recharts-default-tooltip {
+  background: var(--card-bg) !important;
+  border-color: var(--line) !important;
 }
 
 *,
@@ -93,8 +131,8 @@ body {
 }
 
 .admin-header {
-  background: #fff !important;
-  border-bottom: 1px solid #e2e8f0;
+  background: var(--header-bg) !important;
+  border-bottom: 1px solid var(--line);
   display: flex !important;
   align-items: center;
   justify-content: space-between;
@@ -159,7 +197,7 @@ body {
 
 /* Anything that arrived since the bell was last opened. */
 .bell-list li.is-new {
-  background: #ecfdf5;
+  background: var(--accent-tint);
 }
 
 .bell-list-main {
@@ -219,8 +257,7 @@ body {
   justify-content: space-between;
   gap: 12px;
   padding: 6px 10px;
-  border: 1px solid var(--sidebar-border, #e2e8f0);
-  border-color: #e2e8f0;
+  border: 1px solid var(--line);
   border-radius: 8px;
 }
 
@@ -235,7 +272,7 @@ body {
 .drawer-section-title {
   margin: 0 0 12px;
   padding-bottom: 6px;
-  border-bottom: 1px solid #e2e8f0;
+  border-bottom: 1px solid var(--line);
   font-size: 13px;
   font-weight: 700;
   letter-spacing: 0.05em;
@@ -265,14 +302,14 @@ body {
 .drawer-inline-row + .drawer-inline-row {
   margin-top: 12px;
   padding-top: 12px;
-  border-top: 1px solid #e2e8f0;
+  border-top: 1px solid var(--line);
 }
 
 .drawer-danger-zone {
   padding: 14px;
-  border: 1px solid #e2e8f0;
+  border: 1px solid var(--line);
   border-radius: 10px;
-  background: #fafafa;
+  background: var(--soft-bg);
 }
 
 .admin-content {
@@ -302,7 +339,7 @@ body {
 
 .panel-card {
   background: var(--card-bg);
-  border: 1px solid #e2e8f0;
+  border: 1px solid var(--line);
   border-radius: 14px;
   padding: 16px;
   box-shadow: var(--shadow-card);
@@ -394,7 +431,7 @@ body {
 }
 
 .admin-table.users-table .ant-table-tbody > tr > td {
-  padding: 9px 14px !important;
+  padding: 6px 14px !important;
 }
 
 .admin-table.users-table .cell-sub {
@@ -409,7 +446,7 @@ body {
 
 .stat-card {
   background: var(--card-bg);
-  border: 1px solid #e2e8f0;
+  border: 1px solid var(--line);
   border-radius: 14px;
   padding: 16px;
   display: flex;
@@ -434,7 +471,7 @@ body {
   height: 28px;
   width: 56%;
   border-radius: 6px;
-  background: #f1f5f9;
+  background: var(--muted-bg);
 }
 
 .stat-card-hint {
@@ -449,7 +486,7 @@ body {
   border-radius: 10px;
   display: grid;
   place-items: center;
-  background: #ecfdf5;
+  background: var(--accent-tint);
   color: var(--accent);
   font-size: 16px;
 }
@@ -487,12 +524,12 @@ body {
   display: grid;
   place-items: center;
   padding: 32px;
-  background: rgba(238, 242, 246, 0.92);
+  background: var(--login-panel-bg);
 }
 
 .login-card {
   width: min(100%, 400px);
-  background: #fff;
+  background: var(--card-bg);
   border-radius: 16px;
   padding: 28px;
   box-shadow: var(--shadow-card);
@@ -515,4 +552,346 @@ body {
   .login-brand {
     padding: 40px 28px 12px;
   }
+}
+
+/* ---- TollGuru page (pages/tollguru) ------------------------------------- */
+:root {
+  --st-ready: #059669;
+  --st-busy: #2563eb;
+  --st-expiring: #d97706;
+  --st-out: #dc2626;
+  --st-expiring-tint: #fffbeb;
+  --st-out-tint: #fef2f2;
+}
+
+:root[data-theme='dark'] {
+  --st-ready: #34d399;
+  --st-busy: #60a5fa;
+  --st-expiring: #fbbf24;
+  --st-out: #f87171;
+  --st-expiring-tint: rgba(251, 191, 36, 0.1);
+  --st-out-tint: rgba(248, 113, 113, 0.1);
+}
+
+.tg-bg--ready { background: var(--st-ready); }
+.tg-bg--busy { background: var(--st-busy); }
+.tg-bg--session_expiring { background: var(--st-expiring); }
+.tg-bg--signed_out { background: var(--st-out); }
+.tg-fg--busy { color: var(--st-busy); }
+.tg-fg--session_expiring { color: var(--st-expiring); }
+.tg-fg--signed_out { color: var(--st-out); }
+
+.tg-dot {
+  display: inline-block;
+  flex: none;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+}
+
+.tg-ellipsis {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tg-empty {
+  padding: 32px;
+  text-align: center;
+  color: var(--text-secondary);
+}
+
+/* Overview: status-first header. */
+.tg-hero {
+  margin-bottom: 14px;
+}
+
+.tg-hero-top {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+}
+
+.tg-hero-num {
+  font-size: 40px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.tg-hero-num span {
+  font-size: 20px;
+  font-weight: 500;
+  color: var(--text-secondary);
+}
+
+.tg-hero-bars {
+  flex: 1;
+  min-width: 0;
+}
+
+.tg-bar {
+  display: flex;
+  height: 12px;
+  overflow: hidden;
+  gap: 2px;
+  border-radius: 999px;
+  background: var(--muted-bg);
+}
+
+.tg-bar-seg {
+  flex-basis: 0;
+}
+
+.tg-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 16px;
+  margin-top: 8px;
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.tg-legend span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.tg-section-title {
+  margin: 16px 0 6px;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.tg-alert {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  padding: 9px 12px;
+  border-radius: 10px;
+}
+
+.tg-alert + .tg-alert {
+  margin-top: 6px;
+}
+
+.tg-alert--signed_out { background: var(--st-out-tint); color: var(--st-out); }
+.tg-alert--session_expiring { background: var(--st-expiring-tint); color: var(--st-expiring); }
+
+.tg-alert-text {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 13px;
+}
+
+.tg-all-good {
+  margin-top: 14px;
+  color: var(--st-ready);
+  font-weight: 500;
+}
+
+/* Cards. */
+.tg-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(270px, 1fr));
+  gap: 12px;
+}
+
+.tg-card {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 14px 16px;
+  background: var(--card-bg);
+  border: 1px solid var(--line);
+  border-top: 4px solid var(--st-ready);
+  border-radius: 4px 4px 14px 14px;
+  box-shadow: var(--shadow-card);
+}
+
+.tg-card--busy { border-top-color: var(--st-busy); }
+.tg-card--session_expiring { border-top-color: var(--st-expiring); }
+.tg-card--signed_out { border-top-color: var(--st-out); }
+
+.tg-card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.tg-card-head b {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 15px;
+}
+
+.tg-badge {
+  flex: none;
+  padding: 1px 9px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 600;
+  color: #fff;
+  background: var(--st-ready);
+}
+
+:root[data-theme='dark'] .tg-badge { color: #0b1220; }
+.tg-badge--busy { background: var(--st-busy); }
+.tg-badge--session_expiring { background: var(--st-expiring); }
+.tg-badge--signed_out { background: var(--st-out); }
+
+.tg-card-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin: 12px 0 4px;
+  font-size: 15px;
+  font-weight: 500;
+}
+
+.tg-card-note {
+  margin: 6px 0 0 !important;
+  padding: 6px 8px;
+  border-radius: 8px;
+  background: var(--soft-bg);
+  font-size: 12px;
+}
+
+.tg-card-foot {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 4px 10px;
+  margin-top: 10px;
+  padding-top: 8px;
+  border-top: 1px solid var(--line);
+  font-size: 12px;
+}
+
+/* Monitor: dense monospace list. */
+.tg-mon {
+  padding: 8px 14px;
+  font-family: ui-monospace, 'SFMono-Regular', Menlo, Consolas, monospace;
+  font-size: 12.5px;
+}
+
+.tg-mon-sum {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 18px;
+  padding: 6px 0 10px;
+  border-bottom: 1px solid var(--line);
+}
+
+.tg-mon-right {
+  margin-left: auto;
+  color: var(--text-secondary);
+}
+
+.tg-mon-row {
+  display: grid;
+  grid-template-columns: 14px 1.3fr 1.7fr 80px 70px 56px 1.4fr;
+  gap: 10px;
+  align-items: center;
+  padding: 6px 0;
+  border-bottom: 1px solid var(--line);
+}
+
+.tg-mon-row:last-child {
+  border-bottom: none;
+}
+
+.tg-mon-head {
+  color: var(--text-secondary);
+  font-size: 11px;
+}
+
+@media (max-width: 900px) {
+  .tg-hero-top { flex-direction: column; align-items: stretch; }
+  .tg-mon { overflow-x: auto; }
+  .tg-mon-row { min-width: 720px; }
+}
+
+/* "Online now" (Dashboard card → OnlineUsersModal, Users list dot). */
+.online-dot {
+  display: inline-block;
+  flex: none;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--st-ready);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--st-ready) 20%, transparent);
+}
+
+.online-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  max-height: 60vh;
+  overflow-y: auto;
+}
+
+.online-list li {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 4px;
+  border-bottom: 1px solid var(--line);
+}
+
+.online-who {
+  flex: 1;
+  min-width: 0;
+}
+
+.online-who > div {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.online-foot {
+  margin-top: 10px;
+}
+
+.online-empty {
+  padding: 24px;
+  text-align: center;
+}
+
+.stat-card-button {
+  display: block;
+  padding: 0;
+  border: none;
+  background: none;
+  font: inherit;
+  text-align: left;
+  color: inherit;
+  cursor: pointer;
+  border-radius: 14px;
+}
+
+.stat-card-button:hover .stat-card {
+  border-color: var(--accent);
+}
+
+.users-email {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.online-count {
+  margin-bottom: 6px;
+  font-size: 22px;
+  font-weight: 700;
 }

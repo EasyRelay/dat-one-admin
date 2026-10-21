@@ -109,13 +109,12 @@ export function DevicesPage() {
     {
       title: 'Device',
       width: 180,
+      // The install key, shortened. Labels were almost never set, so the
+      // "unnamed" line above it only made every row taller.
       render: (_, row) => (
-        <div>
-          <div>{row.label || <span className="cell-sub">unnamed</span>}</div>
-          <Tooltip title={row.deviceKey}>
-            <code className="cell-sub">{shortKey(row.deviceKey)}</code>
-          </Tooltip>
-        </div>
+        <Tooltip title={row.label ? `${row.label} — ${row.deviceKey}` : row.deviceKey}>
+          <code className="cell-sub">{shortKey(row.deviceKey)}</code>
+        </Tooltip>
       ),
     },
     {

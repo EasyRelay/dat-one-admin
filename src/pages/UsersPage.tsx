@@ -26,6 +26,7 @@ import {
   isLifetime,
   planStatus,
 } from '../utils/formatters';
+import { isOnline } from '../utils/presence';
 import { GrantPlanModal } from './users/GrantPlanModal';
 import { UserDrawer } from './users/UserDrawer';
 
@@ -132,10 +133,12 @@ export function UsersPage() {
       width: '25%',
       sorter: true,
       sortOrder: sort.field === 'email' ? sort.order : null,
+      // Email only — the name line was mostly '—' and doubled every row's height.
       render: (_, row) => (
-        <div className="cell-two-line">
+        <div className="cell-two-line users-email" title={row.name || undefined}>
+          {/* Green dot = has a DAT tab open right now (presence ping). */}
+          {isOnline(row.lastSeenAt) ? <i className="online-dot" title="Online now" /> : null}
           <div className="cell-main">{row.email}</div>
-          <div className="cell-sub">{row.name || '—'}</div>
         </div>
       ),
     },

@@ -27,6 +27,7 @@ import { StatCard } from '../components/StatCard';
 import type { ExtDashboard } from '../types/dashboard';
 import { useVisiblePoll } from '../hooks/useVisiblePoll';
 import { formatMoney } from '../utils/formatters';
+import { OnlineUsersModal } from './dashboard/OnlineUsersModal';
 
 /** How stale the dashboard may get while somebody is watching it. */
 const DASHBOARD_POLL_MS = 30_000;
@@ -49,6 +50,7 @@ export function DashboardPage() {
   const [data, setData] = useState<ExtDashboard | null>(null);
   const [loading, setLoading] = useState(true);
   const [currency, setCurrency] = useState<string | null>(null);
+  const [onlineOpen, setOnlineOpen] = useState(false);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -143,14 +145,17 @@ export function DashboardPage() {
           variant="success"
           loading={loading && !data}
         />
-        <StatCard
-          label="Online"
-          value={data?.users.online ?? '—'}
-          hint={`${data?.users.seenLast24h ?? 0} seen 24h`}
-          icon={<WifiOutlined />}
-          variant="warning"
-          loading={loading && !data}
-        />
+        {/* Click for the list of who is online (live, polls while open). */}
+        <button type="button" className="stat-card-button" onClick={() => setOnlineOpen(true)}>
+          <StatCard
+            label="Online now"
+            value={data?.users.online ?? '—'}
+            hint={`${data?.users.seenLast24h ?? 0} seen 24h · click to see who`}
+            icon={<WifiOutlined />}
+            variant="warning"
+            loading={loading && !data}
+          />
+        </button>
         <StatCard
           label="Devices"
           value={data?.devices.active ?? '—'}
@@ -291,6 +296,8 @@ export function DashboardPage() {
           )}
         </div>
       </div>
+
+      <OnlineUsersModal open={onlineOpen} onClose={() => setOnlineOpen(false)} />
     </div>
   );
 }

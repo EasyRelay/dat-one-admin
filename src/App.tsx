@@ -4,6 +4,7 @@ import { RouterProvider } from 'react-router-dom';
 import { router } from './router';
 import { useAuthStore } from './store/auth.store';
 import { usePlansStore } from './store/plans.store';
+import { useThemeStore } from './store/theme.store';
 import { adminTheme } from './theme/adminTheme';
 
 function StoreBootstrap() {
@@ -19,8 +20,9 @@ function StoreBootstrap() {
 }
 
 export function App() {
+  const mode = useThemeStore((state) => state.mode);
   return (
-    <ConfigProvider theme={adminTheme}>
+    <ConfigProvider theme={adminTheme(mode)}>
       <AntdApp>
         <StoreBootstrap />
         <RouterProvider router={router} />
