@@ -1,6 +1,7 @@
 import {
   CopyOutlined,
   MoreOutlined,
+  PieChartOutlined,
   PlusOutlined,
   ReloadOutlined,
 } from '@ant-design/icons';
@@ -19,11 +20,13 @@ import { PageHeader } from '../components/PageHeader';
 import { useListRequest } from '../hooks/useListRequest';
 import type { ExtCampaign } from '../types/campaign';
 import { formatDayTime } from '../utils/formatters';
+import { CampaignChartsModal } from './campaigns/CampaignChartsModal';
 import { CampaignFormModal } from './campaigns/CampaignFormModal';
 
 export function CampaignsPage() {
   const { message, modal } = App.useApp();
   const [formOpen, setFormOpen] = useState(false);
+  const [chartsOpen, setChartsOpen] = useState(false);
   const [editing, setEditing] = useState<ExtCampaign | null>(null);
 
   const fetcher = useCallback(async () => {
@@ -66,8 +69,9 @@ export function CampaignsPage() {
       title: 'Campaign',
       render: (_, row) => (
         <div>
-          <strong>{row.name}</strong>
-          <div className="cell-sub">{row.slug}</div>
+          <strong>
+            {row.name} ({row.slug})
+          </strong>
           <div
             className="cell-sub"
             title={row.destinationUrl}
@@ -173,6 +177,12 @@ export function CampaignsPage() {
         subtitle="One link per ad. Clicks are counted, then people are sent to the Chrome Web Store."
         extra={
           <Space>
+            <Button
+              icon={<PieChartOutlined />}
+              onClick={() => setChartsOpen(true)}
+            >
+              Diagrams
+            </Button>
             <Button icon={<ReloadOutlined />} onClick={() => void reload()}>
               Refresh
             </Button>
@@ -210,6 +220,11 @@ export function CampaignsPage() {
         campaign={editing}
         onClose={() => setFormOpen(false)}
         onSaved={() => void reload()}
+      />
+      <CampaignChartsModal
+        open={chartsOpen}
+        campaigns={items}
+        onClose={() => setChartsOpen(false)}
       />
     </div>
   );
