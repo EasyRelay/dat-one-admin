@@ -15,6 +15,7 @@ import {
   SunOutlined,
   NotificationOutlined,
   TagsOutlined,
+  LinkOutlined,
 } from '@ant-design/icons';
 import { PaymentsBell } from '../components/PaymentsBell';
 import { SwitchAdminPanelButton } from '../components/SwitchAdminPanelButton';
@@ -40,6 +41,7 @@ const NAV_ITEMS = [
   { key: '/plans', icon: <CreditCardOutlined />, label: 'Plans' },
   { key: '/payments', icon: <DollarOutlined />, label: 'Payments' },
   { key: '/promo-codes', icon: <TagsOutlined />, label: 'Promo codes' },
+  { key: '/campaigns', icon: <LinkOutlined />, label: 'Campaign links' },
   {
     key: '/notifications',
     icon: <NotificationOutlined />,
@@ -55,6 +57,7 @@ const PAGE_TITLES: Record<string, string> = {
   '/plans': 'Plans',
   '/payments': 'Payments',
   '/promo-codes': 'Promo codes',
+  '/campaigns': 'Campaign links',
   '/notifications': 'Notifications',
 };
 

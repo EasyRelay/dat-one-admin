@@ -12,6 +12,7 @@ import { PlansPage } from './pages/PlansPage';
 import { PaymentsPage } from './pages/PaymentsPage';
 import { PromoCodesPage } from './pages/PromoCodesPage';
 import { NotificationsPage } from './pages/NotificationsPage';
+import { CampaignsPage } from './pages/CampaignsPage';
 
 export const router = createBrowserRouter([
   {
@@ -36,6 +37,7 @@ export const router = createBrowserRouter([
           { path: 'payments', element: <PaymentsPage /> },
           { path: 'promo-codes', element: <PromoCodesPage /> },
           { path: 'notifications', element: <NotificationsPage /> },
+          { path: 'campaigns', element: <CampaignsPage /> },
           // `/subscriptions` was folded into Users; old bookmarks still work.
           { path: 'subscriptions', element: <Navigate to="/users" replace /> },
         ],
