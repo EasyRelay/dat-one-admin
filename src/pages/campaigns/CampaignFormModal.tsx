@@ -6,7 +6,7 @@ import { formModalProps } from '../../theme/modal';
 import type { ExtCampaign } from '../../types/campaign';
 
 const STORE_URL =
-  'https://chromewebstore.google.com/detail/easy-dat/effcgcdiokabamebngbmdkdnnbdpanfi';
+  'https://chromewebstore.google.com/detail/easy-dat-fraud-check-truc/effcgcdiokabamebngbmdkdnnbdpanfi?hl=en-US&utm_source=ext_sidebar';
 
 interface Props {
   open: boolean;
