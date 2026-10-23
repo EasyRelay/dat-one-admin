@@ -19,7 +19,7 @@ interface Props {
 
 function slices(
   campaigns: ExtCampaign[],
-  key: 'clickCount' | 'uniqueClickCount',
+  key: 'clickCount' | 'uniqueClickCount' | 'installCount',
 ): { name: string; value: number }[] {
   return campaigns
     .filter((row) => row[key] > 0)
@@ -83,6 +83,10 @@ export function CampaignChartsModal({ open, campaigns, onClose }: Props) {
         <CampaignPie
           title="Unique"
           data={slices(campaigns, 'uniqueClickCount')}
+        />
+        <CampaignPie
+          title="Installs"
+          data={slices(campaigns, 'installCount')}
         />
       </div>
     </Modal>

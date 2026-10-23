@@ -6,6 +6,7 @@ export interface ExtCampaign {
   enabled: boolean;
   clickCount: number;
   uniqueClickCount: number;
+  installCount: number;
   lastClickAt: string | null;
   createdBy: string | null;
   createdAt: string;

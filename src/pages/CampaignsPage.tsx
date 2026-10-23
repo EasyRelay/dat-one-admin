@@ -114,6 +114,12 @@ export function CampaignsPage() {
       render: (_, row) => row.uniqueClickCount,
     },
     {
+      title: 'Installs',
+      width: 90,
+      align: 'right',
+      render: (_, row) => row.installCount ?? 0,
+    },
+    {
       title: 'Last click',
       width: 160,
       render: (_, row) =>
@@ -174,7 +180,7 @@ export function CampaignsPage() {
     <div>
       <PageHeader
         title="Campaign links"
-        subtitle="One link per ad. Clicks are counted, then people are sent to the Chrome Web Store."
+        subtitle="One link per ad. Clicks count visits. Installs count people who add the extension after opening that link."
         extra={
           <Space>
             <Button
@@ -209,7 +215,7 @@ export function CampaignsPage() {
           columns={columns}
           dataSource={items}
           tableLayout="fixed"
-          scroll={items.length ? { x: 860 } : undefined}
+          scroll={items.length ? { x: 950 } : undefined}
           pagination={false}
           locale={{ emptyText: 'No campaign links yet' }}
         />
