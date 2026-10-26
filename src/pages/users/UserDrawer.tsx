@@ -9,6 +9,7 @@ import {
   Input,
   Space,
   Spin,
+  Switch,
   Table,
   Tabs,
   Tag,
@@ -225,6 +226,14 @@ export function UserDrawer({
         }
       },
     });
+  }
+
+  function handleToggleRelay(enabled: boolean) {
+    if (!user) return;
+    void runAction(
+      () => updateUser(user.id, { relayEnabled: enabled }),
+      enabled ? 'Relay on for this account' : 'Relay off for this account',
+    );
   }
 
   function handleToggleActive() {
@@ -598,6 +607,17 @@ export function UserDrawer({
             </>
           ) : (
             <>
+              <div className="drawer-inline-row">
+                <span className="cell-sub">
+                  Use this account’s open DAT One tabs for live search. Off
+                  disconnects them. The account itself keeps working.
+                </span>
+                <Switch
+                  checked={user.relayEnabled !== false}
+                  disabled={busy}
+                  onChange={handleToggleRelay}
+                />
+              </div>
               <div className="drawer-inline-row">
                 <span className="cell-sub">
                   {user.isActive

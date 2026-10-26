@@ -544,6 +544,49 @@ body {
   color: var(--text-secondary);
 }
 
+.login-totp-qr {
+  display: block;
+  width: 180px;
+  height: 180px;
+  margin: 0 auto 12px;
+  padding: 8px;
+  background: #fff;
+  border-radius: 8px;
+}
+
+.login-totp-key {
+  margin: 0 0 16px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 13px;
+  letter-spacing: 0.04em;
+  text-align: center;
+  word-break: break-all;
+}
+
+.login-email-chip {
+  margin: 0 0 16px;
+  color: var(--text-secondary);
+  font-size: 14px;
+}
+
+.login-backup-codes {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin: 0 0 16px;
+  padding: 0;
+  list-style: none;
+}
+
+.login-backup-codes li {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 13px;
+  text-align: center;
+  padding: 8px 4px;
+  border: 1px solid color-mix(in srgb, var(--text-secondary) 35%, transparent);
+  border-radius: 8px;
+}
+
 @media (max-width: 900px) {
   .login-page {
     grid-template-columns: 1fr;
