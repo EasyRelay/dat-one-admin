@@ -39,7 +39,7 @@ type StatusFilter = 'active' | 'disabled';
  * default list quietly included them — an archived account looked like any
  * other row until someone read the tag.
  */
-type Scope = 'accounts' | 'archive';
+type Scope = 'accounts' | 'hidden' | 'archive';
 
 const PLAN_TAG_COLOR = 'cyan';
 
@@ -72,6 +72,7 @@ export function UsersPage() {
 
   const debouncedSearch = useDebouncedValue(search);
   const archived = scope === 'archive';
+  const hidden = scope === 'hidden';
 
   const fetcher = useCallback(
     () =>
@@ -89,7 +90,8 @@ export function UsersPage() {
             : status === 'disabled'
               ? false
               : undefined,
-        removed: archived,
+        removed: hidden ? undefined : archived,
+        hidden,
         ...(sort.field && sort.order
           ? {
               sortBy: sort.field,
@@ -97,7 +99,7 @@ export function UsersPage() {
             }
           : {}),
       }),
-    [archived, debouncedSearch, page, pageSize, plan, sort, status],
+    [archived, debouncedSearch, hidden, page, pageSize, plan, sort, status],
   );
 
   const { items, total, loading, reload, setItems } =
@@ -108,8 +110,14 @@ export function UsersPage() {
    * dropped from the one being shown rather than patched in place — leaving it
    * there is how an archived account keeps appearing under "Accounts".
    */
+  function inThisList(saved: ExtUser): boolean {
+    if (hidden) return saved.hidden;
+    if (saved.hidden) return false;
+    return saved.removed === archived;
+  }
+
   function applyUser(saved: ExtUser) {
-    if (saved.removed !== archived) {
+    if (!inThisList(saved)) {
       setItems((prev) => prev.filter((row) => row.id !== saved.id));
       setSelected(null);
       return;
@@ -277,14 +285,16 @@ export function UsersPage() {
         subtitle={
           archived
             ? 'Archived accounts — restore them or delete them for good'
-            : 'Extension accounts, their plans and their access'
+            : hidden
+              ? 'Test accounts and our own people — left out of dashboard counts'
+              : 'Extension accounts, their plans and their access'
         }
         extra={
           <Space>
             <Button icon={<ReloadOutlined />} onClick={() => void reload()}>
               Refresh
             </Button>
-            {!archived && (
+            {scope === 'accounts' && (
               <Button
                 type="primary"
                 icon={<PlusOutlined />}
@@ -308,6 +318,7 @@ export function UsersPage() {
           }}
           options={[
             { value: 'accounts', label: 'Accounts' },
+            { value: 'hidden', label: 'Hidden' },
             { value: 'archive', label: 'Archive' },
           ]}
           style={{ marginBottom: 16 }}
@@ -382,7 +393,9 @@ export function UsersPage() {
           locale={{
             emptyText: archived
               ? 'Nothing is archived'
-              : 'No accounts match these filters',
+              : hidden
+                ? 'Nobody is in Hidden yet'
+                : 'No accounts match these filters',
           }}
           pagination={{
             current: page,
@@ -391,7 +404,11 @@ export function UsersPage() {
             size: 'small',
             showSizeChanger: true,
             showTotal: (count) =>
-              archived ? `${count} archived` : `${count} accounts`,
+              archived
+                ? `${count} archived`
+                : hidden
+                  ? `${count} hidden`
+                  : `${count} accounts`,
             onChange: (nextPage, nextSize) => {
               setPage(nextPage);
               setPageSize(nextSize);

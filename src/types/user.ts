@@ -10,6 +10,7 @@ export interface ExtUser {
   planExpiresAt: string | null;
   isActive: boolean;
   removed: boolean;
+  hidden: boolean;
   relayEnabled: boolean;
   note: string | null;
   /** Per-account tri-state: true = forced on, false = forced off, absent = plan decides. */
@@ -40,6 +41,7 @@ export interface UpdateExtUserPayload {
   note?: string | null;
   isActive?: boolean;
   removed?: boolean;
+  hidden?: boolean;
   relayEnabled?: boolean;
   featureOverrides?: Partial<ExtFeatureMap> | null;
 }

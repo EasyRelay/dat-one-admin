@@ -228,11 +228,19 @@ export function UserDrawer({
     });
   }
 
+  function handleToggleHidden(enabled: boolean) {
+    if (!user) return;
+    void runAction(
+      () => updateUser(user.id, { hidden: enabled }),
+      enabled ? 'Moved to Hidden' : 'Taken out of Hidden',
+    );
+  }
+
   function handleToggleRelay(enabled: boolean) {
     if (!user) return;
     void runAction(
       () => updateUser(user.id, { relayEnabled: enabled }),
-      enabled ? 'Relay on for this account' : 'Relay off for this account',
+      enabled ? 'Live on for this account' : 'Live off for this account',
     );
   }
 
@@ -584,6 +592,17 @@ export function UserDrawer({
       <section>
         <p className="drawer-section-title">Account status</p>
         <div className="drawer-danger-zone">
+          <div className="drawer-inline-row">
+            <span className="cell-sub">
+              Hidden keeps this account out of the accounts list and out of
+              dashboard totals and charts. The extension keeps working.
+            </span>
+            <Switch
+              checked={user.hidden === true}
+              disabled={busy}
+              onChange={handleToggleHidden}
+            />
+          </div>
           {user.removed ? (
             <>
               <div className="drawer-inline-row">

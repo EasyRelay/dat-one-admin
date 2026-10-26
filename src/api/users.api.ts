@@ -19,6 +19,7 @@ export interface ListUsersParams {
   plan?: string;
   isActive?: boolean;
   removed?: boolean;
+  hidden?: boolean;
   /** Sorting is server-side: the list is paged, so the page alone cannot be it. */
   sortBy?: UserSortField;
   sortOrder?: 'asc' | 'desc';
