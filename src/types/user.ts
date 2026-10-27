@@ -25,6 +25,11 @@ export interface ExtUser {
   updatedAt: string;
   /** Filled by the list endpoint only. */
   latestPayment: ExtPayment | null;
+  /**
+   * Installs (computers) of this account with a one.dat.com tab open right
+   * now; 0 = DAT closed everywhere. Live — the list re-reads it on a timer.
+   */
+  datOpenDevices: number;
 }
 
 export interface PaginatedExtUsers {

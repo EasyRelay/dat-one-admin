@@ -10,7 +10,7 @@ import {
 } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import type { SortOrder } from 'antd/es/table/interface';
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { listUsers, type UserSortField } from '../api/users.api';
 import { PageHeader } from '../components/PageHeader';
 import { useDebouncedValue } from '../hooks/useDebouncedValue';
@@ -26,7 +26,6 @@ import {
   isLifetime,
   planStatus,
 } from '../utils/formatters';
-import { isOnline } from '../utils/presence';
 import { GrantPlanModal } from './users/GrantPlanModal';
 import { UserDrawer } from './users/UserDrawer';
 
@@ -42,6 +41,8 @@ type StatusFilter = 'active' | 'disabled';
 type Scope = 'accounts' | 'hidden' | 'archive';
 
 const PLAN_TAG_COLOR = 'cyan';
+/** How often the list re-reads who has DAT open (the extension reports changes within seconds). */
+const DAT_OPEN_REFRESH_MS = 20_000;
 
 /**
  * Accounts and their subscriptions, in one table.
@@ -105,6 +106,27 @@ export function UsersPage() {
   const { items, total, loading, reload, setItems } =
     useListRequest<ExtUser>(fetcher);
 
+  // "DAT open" changes by the minute. Re-read the page quietly and update only
+  // that field, so a refresh never flashes the table or overwrites a row being
+  // edited.
+  useEffect(() => {
+    const timer = window.setInterval(() => {
+      fetcher()
+        .then((data) => {
+          const open = new Map(data.items.map((row) => [row.id, row.datOpenDevices]));
+          setItems((prev) =>
+            prev.map((row) =>
+              open.has(row.id) ? { ...row, datOpenDevices: open.get(row.id) ?? 0 } : row,
+            ),
+          );
+        })
+        .catch(() => {
+          // Background poll; the Refresh button reports errors.
+        });
+    }, DAT_OPEN_REFRESH_MS);
+    return () => window.clearInterval(timer);
+  }, [fetcher, setItems]);
+
   /**
    * Archiving and restoring move a row between the two lists, so the row is
    * dropped from the one being shown rather than patched in place — leaving it
@@ -124,7 +146,10 @@ export function UsersPage() {
     }
     setItems((prev) =>
       prev.map((row) =>
-        row.id === saved.id ? { ...saved, latestPayment: row.latestPayment } : row,
+        row.id === saved.id
+          ? // A single-account answer carries neither; keep what the list knew.
+            { ...saved, latestPayment: row.latestPayment, datOpenDevices: row.datOpenDevices }
+          : row,
       ),
     );
     setSelected((prev) => (prev && prev.id === saved.id ? saved : prev));
@@ -144,11 +169,27 @@ export function UsersPage() {
       // Email only — the name line was mostly '—' and doubled every row's height.
       render: (_, row) => (
         <div className="cell-two-line users-email" title={row.name || undefined}>
-          {/* Green dot = has a DAT tab open right now (presence ping). */}
-          {isOnline(row.lastSeenAt) ? <i className="online-dot" title="Online now" /> : null}
           <div className="cell-main">{row.email}</div>
         </div>
       ),
+    },
+    {
+      title: 'DAT',
+      width: 110,
+      render: (_, row) =>
+        row.datOpenDevices > 0 ? (
+          <Tag
+            color="green"
+            style={{ marginInlineEnd: 0 }}
+            title={`one.dat.com is open on ${row.datOpenDevices} computer${row.datOpenDevices === 1 ? '' : 's'}`}
+          >
+            Open{row.datOpenDevices > 1 ? ` · ${row.datOpenDevices} PCs` : ''}
+          </Tag>
+        ) : (
+          <Tag color="red" style={{ marginInlineEnd: 0 }} title="No one.dat.com tab open">
+            Closed
+          </Tag>
+        ),
     },
     {
       title: 'Plan',

@@ -442,6 +442,17 @@ export function UserDrawer({
         <Descriptions.Item label="Last seen">
           <span title={formatDate(user.lastSeenAt)}>{formatDayTime(user.lastSeenAt)}</span>
         </Descriptions.Item>
+        <Descriptions.Item label="DAT now">
+          {user.datOpenDevices > 0 ? (
+            <Tag color="green" style={{ marginInlineEnd: 0 }}>
+              Open on {user.datOpenDevices} computer{user.datOpenDevices === 1 ? '' : 's'}
+            </Tag>
+          ) : (
+            <Tag color="red" style={{ marginInlineEnd: 0 }}>
+              Closed
+            </Tag>
+          )}
+        </Descriptions.Item>
       </Descriptions>
 
       <section>
