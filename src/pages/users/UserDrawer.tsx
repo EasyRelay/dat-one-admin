@@ -49,6 +49,7 @@ import {
 import { SendNotificationModal } from '../notifications/SendNotificationModal';
 import { FeatureAccessModal } from './FeatureAccessModal';
 import { GrantPlanModal } from './GrantPlanModal';
+import { DeviceStatusTags } from '../../components/DeviceStatusTags';
 
 interface DetailsFormValues {
   name: string | null;
@@ -398,12 +399,8 @@ export function UserDrawer({
     },
     {
       title: 'Status',
-      width: 90,
-      render: (_, row) => (
-        <Tag color={row.status === 'active' ? 'green' : 'default'}>
-          {row.status}
-        </Tag>
-      ),
+      width: 170,
+      render: (_, row) => <DeviceStatusTags device={row} />,
     },
     {
       title: 'Last seen',

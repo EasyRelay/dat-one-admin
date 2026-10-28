@@ -12,6 +12,8 @@ export interface ExtDevice {
   label: string | null;
   note: string | null;
   lastSeenAt: string | null;
+  /** Chrome reported the extension removed from this install. A marker only. */
+  uninstalledAt: string | null;
   createdAt: string;
   updatedAt: string;
 }

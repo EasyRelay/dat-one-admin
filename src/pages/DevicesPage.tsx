@@ -5,7 +5,7 @@ import {
   ReloadOutlined,
   SearchOutlined,
 } from '@ant-design/icons';
-import { App, Button, Input, Select, Space, Table, Tag, Tooltip } from 'antd';
+import { App, Button, Input, Select, Space, Table, Tooltip } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import { useCallback, useState } from 'react';
 import {
@@ -21,6 +21,7 @@ import { useListRequest } from '../hooks/useListRequest';
 import type { ExtDevice, ExtDeviceStatus } from '../types/device';
 import { formatDate } from '../utils/formatters';
 import { EditDeviceModal } from './devices/EditDeviceModal';
+import { DeviceStatusTags } from '../components/DeviceStatusTags';
 
 function shortKey(key: string): string {
   if (key.length <= 10) return key;
@@ -126,10 +127,8 @@ export function DevicesPage() {
     {
       title: 'Status',
       dataIndex: 'status',
-      width: 100,
-      render: (value: ExtDeviceStatus) => (
-        <Tag color={value === 'active' ? 'green' : 'default'}>{value}</Tag>
-      ),
+      width: 170,
+      render: (_, row) => <DeviceStatusTags device={row} />,
     },
     {
       title: 'IP',
