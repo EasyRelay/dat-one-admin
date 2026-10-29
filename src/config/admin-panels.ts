@@ -9,7 +9,8 @@
  * An empty URL hides the switch.
  */
 const OTHER_ADMIN_PANEL_DEV_URL = 'http://localhost:5180';
-const OTHER_ADMIN_PANEL_PROD_URL = 'https://dat.easyrelay.us';
+// Our own Netlify copy; dat.easyrelay.us (Cloudflare) serves the same build.
+const OTHER_ADMIN_PANEL_PROD_URL = 'https://admin.vpndat.com';
 
 /** Same rule the API client follows: no VITE_API_BASE_URL means production. */
 function usesLocalBackend(): boolean {
