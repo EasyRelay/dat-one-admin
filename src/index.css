@@ -938,3 +938,17 @@ body {
   font-size: 22px;
   font-weight: 700;
 }
+
+/* Easy DAT removed from every install of the account (Chrome's uninstall URL). */
+.tag-removed {
+  border-color: #262626;
+  background: #262626;
+  color: #fff;
+  font-weight: 600;
+}
+
+.tag-removed-partial {
+  color: #d46b08;
+  font-size: 13px;
+  cursor: help;
+}

@@ -12,6 +12,7 @@ import type { ColumnsType } from 'antd/es/table';
 import type { SortOrder } from 'antd/es/table/interface';
 import { useCallback, useEffect, useState } from 'react';
 import { listUsers, type UserSortField } from '../api/users.api';
+import { DatPresenceTag } from '../components/DatPresenceTag';
 import { PageHeader } from '../components/PageHeader';
 import { useDebouncedValue } from '../hooks/useDebouncedValue';
 import { useListRequest } from '../hooks/useListRequest';
@@ -148,7 +149,12 @@ export function UsersPage() {
       prev.map((row) =>
         row.id === saved.id
           ? // A single-account answer carries neither; keep what the list knew.
-            { ...saved, latestPayment: row.latestPayment, datOpenDevices: row.datOpenDevices }
+            {
+              ...saved,
+              latestPayment: row.latestPayment,
+              datOpenDevices: row.datOpenDevices,
+              installs: saved.installs ?? row.installs,
+            }
           : row,
       ),
     );
@@ -176,20 +182,7 @@ export function UsersPage() {
     {
       title: 'DAT',
       width: 110,
-      render: (_, row) =>
-        row.datOpenDevices > 0 ? (
-          <Tag
-            color="green"
-            style={{ marginInlineEnd: 0 }}
-            title={`one.dat.com is open on ${row.datOpenDevices} computer${row.datOpenDevices === 1 ? '' : 's'}`}
-          >
-            Open{row.datOpenDevices > 1 ? ` · ${row.datOpenDevices} PCs` : ''}
-          </Tag>
-        ) : (
-          <Tag color="red" style={{ marginInlineEnd: 0 }} title="No one.dat.com tab open">
-            Closed
-          </Tag>
-        ),
+      render: (_, row) => <DatPresenceTag open={row.datOpenDevices} installs={row.installs ?? null} />,
     },
     {
       title: 'Plan',

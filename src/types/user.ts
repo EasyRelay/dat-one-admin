@@ -30,6 +30,17 @@ export interface ExtUser {
    * now; 0 = DAT closed everywhere. Live — the list re-reads it on a timer.
    */
   datOpenDevices: number;
+  /**
+   * Installs of the account and how many Chrome reported uninstalled. null =
+   * no install row yet, or an older backend (absent).
+   */
+  installs?: ExtInstallSummary | null;
+}
+
+export interface ExtInstallSummary {
+  installs: number;
+  uninstalled: number;
+  lastUninstalledAt: string | null;
 }
 
 export interface PaginatedExtUsers {

@@ -49,6 +49,7 @@ import {
 import { SendNotificationModal } from '../notifications/SendNotificationModal';
 import { FeatureAccessModal } from './FeatureAccessModal';
 import { GrantPlanModal } from './GrantPlanModal';
+import { DatPresenceTag } from '../../components/DatPresenceTag';
 import { DeviceStatusTags } from '../../components/DeviceStatusTags';
 
 interface DetailsFormValues {
@@ -440,15 +441,7 @@ export function UserDrawer({
           <span title={formatDate(user.lastSeenAt)}>{formatDayTime(user.lastSeenAt)}</span>
         </Descriptions.Item>
         <Descriptions.Item label="DAT now">
-          {user.datOpenDevices > 0 ? (
-            <Tag color="green" style={{ marginInlineEnd: 0 }}>
-              Open on {user.datOpenDevices} computer{user.datOpenDevices === 1 ? '' : 's'}
-            </Tag>
-          ) : (
-            <Tag color="red" style={{ marginInlineEnd: 0 }}>
-              Closed
-            </Tag>
-          )}
+          <DatPresenceTag open={user.datOpenDevices} installs={user.installs ?? null} long />
         </Descriptions.Item>
       </Descriptions>
 
