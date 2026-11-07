@@ -54,11 +54,20 @@ const PAGE_TITLES: Record<string, string> = {
   '/users': 'Users',
   '/devices': 'Devices',
   '/tollguru': 'TollGuru',
+  '/toll-bot': 'Toll bot',
   '/plans': 'Plans',
   '/payments': 'Payments',
   '/promo-codes': 'Promo codes',
   '/campaigns': 'Campaign links',
   '/notifications': 'Notifications',
+};
+
+/**
+ * Pages with no menu entry of their own, reached from another page; the menu
+ * keeps that page highlighted. Toll bot opens from the TollGuru page.
+ */
+const NAV_PARENT: Record<string, string> = {
+  '/toll-bot': '/tollguru',
 };
 
 export function AppLayout() {
@@ -72,12 +81,13 @@ export function AppLayout() {
 
   const adminEmail = emailFromToken(token);
 
-  const selectedKey =
+  const pageKey =
     location.pathname === '/'
       ? '/'
-      : (NAV_ITEMS.find(
-          (item) => item.key !== '/' && location.pathname.startsWith(item.key),
-        )?.key ?? '/');
+      : (Object.keys(PAGE_TITLES).find(
+          (key) => key !== '/' && location.pathname.startsWith(key),
+        ) ?? '/');
+  const selectedKey = NAV_PARENT[pageKey] ?? pageKey;
 
   return (
     <Layout className="admin-shell">
@@ -121,7 +131,7 @@ export function AppLayout() {
               icon={collapsed ? <MenuUnfoldOutlined /> : <MenuFoldOutlined />}
               onClick={() => setCollapsed((v) => !v)}
             />
-            <h2>{PAGE_TITLES[selectedKey] ?? 'Admin'}</h2>
+            <h2>{PAGE_TITLES[pageKey] ?? 'Admin'}</h2>
           </div>
           <div className="admin-header-right">
             <SwitchAdminPanelButton />

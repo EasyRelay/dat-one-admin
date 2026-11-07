@@ -8,6 +8,7 @@ import { DashboardPage } from './pages/DashboardPage';
 import { UsersPage } from './pages/UsersPage';
 import { DevicesPage } from './pages/DevicesPage';
 import { TollBrowsersPage } from './pages/TollBrowsersPage';
+import { TollBotUsersPage } from './pages/TollBotUsersPage';
 import { PlansPage } from './pages/PlansPage';
 import { PaymentsPage } from './pages/PaymentsPage';
 import { PromoCodesPage } from './pages/PromoCodesPage';
@@ -33,6 +34,7 @@ export const router = createBrowserRouter([
           { path: 'users', element: <UsersPage /> },
           { path: 'devices', element: <DevicesPage /> },
           { path: 'tollguru', element: <TollBrowsersPage /> },
+          { path: 'toll-bot', element: <TollBotUsersPage /> },
           { path: 'plans', element: <PlansPage /> },
           { path: 'payments', element: <PaymentsPage /> },
           { path: 'promo-codes', element: <PromoCodesPage /> },

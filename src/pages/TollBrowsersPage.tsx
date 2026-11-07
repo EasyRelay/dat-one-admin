@@ -2,10 +2,12 @@ import {
   AppstoreOutlined,
   DashboardOutlined,
   ReloadOutlined,
+  RobotOutlined,
   UnorderedListOutlined,
 } from '@ant-design/icons';
 import { App, Button, Segmented, Space, Spin } from 'antd';
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { extractApiError } from '../api/client';
 import { listTollBrowsers } from '../api/toll-browsers.api';
 import { PageHeader } from '../components/PageHeader';
@@ -47,6 +49,7 @@ function readView(): View {
  */
 export function TollBrowsersPage() {
   const { message } = App.useApp();
+  const navigate = useNavigate();
   const [data, setData] = useState<TollBrowsers | null>(null);
   const [loading, setLoading] = useState(true);
   const [view, setView] = useState<View>(readView);
@@ -102,6 +105,9 @@ export function TollBrowsersPage() {
                 { value: 'monitor', label: 'Monitor', icon: <UnorderedListOutlined /> },
               ]}
             />
+            <Button icon={<RobotOutlined />} onClick={() => navigate('/toll-bot')}>
+              Toll bot
+            </Button>
             <Button icon={<ReloadOutlined />} onClick={() => void load()}>
               Refresh
             </Button>
