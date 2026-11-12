@@ -68,7 +68,17 @@ export interface TollBotSettings {
   privateChatEnabled: boolean;
   /** What "Get directions" on a card does. */
   directionsMode: TollBotDirectionsMode;
+  /** Look of the "Get directions" page on map.easydat.us. */
+  directionsPageStyle: TollBotDirectionsPageStyle;
+  /** Map on that page. */
+  directionsMap: TollBotDirectionsMap;
 }
+
+/** `classic` = the original copy page; `modern` = the Easy DAT site look. */
+export type TollBotDirectionsPageStyle = 'classic' | 'modern';
+
+/** `google` = Google's free embedded map; `osm` = OpenStreetMap with the exact TollGuru line. */
+export type TollBotDirectionsMap = 'google' | 'osm';
 
 /**
  * "Get directions" on a result card: `link` = a link in the caption (the copy
@@ -88,6 +98,8 @@ export interface UpdateTollBotSettings {
   newGroupsEnabled?: boolean | null;
   privateChatEnabled?: boolean | null;
   directionsMode?: TollBotDirectionsMode | null;
+  directionsPageStyle?: TollBotDirectionsPageStyle | null;
+  directionsMap?: TollBotDirectionsMap | null;
 }
 
 /** A Telegram group the toll bot is in (or was). */

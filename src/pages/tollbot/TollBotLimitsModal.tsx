@@ -15,7 +15,12 @@ import { useEffect, useState } from 'react';
 import { extractApiError } from '../../api/client';
 import { getTollBotSettings, updateTollBotSettings } from '../../api/toll-bot.api';
 import { formModalProps } from '../../theme/modal';
-import type { TollBotDirectionsMode, TollBotSettings } from '../../types/toll-bot';
+import type {
+  TollBotDirectionsMap,
+  TollBotDirectionsMode,
+  TollBotDirectionsPageStyle,
+  TollBotSettings,
+} from '../../types/toll-bot';
 
 interface FormValues {
   dailyLaneLimit: number | null;
@@ -27,6 +32,8 @@ interface FormValues {
   newGroupsEnabled: boolean;
   privateChatEnabled: boolean;
   directionsMode: TollBotDirectionsMode;
+  directionsPageStyle: TollBotDirectionsPageStyle;
+  directionsMap: TollBotDirectionsMap;
 }
 
 interface Props {
@@ -69,6 +76,8 @@ export function TollBotLimitsModal({ open, onClose, onSaved }: Props) {
           newGroupsEnabled: loaded.newGroupsEnabled,
           privateChatEnabled: loaded.privateChatEnabled,
           directionsMode: loaded.directionsMode,
+          directionsPageStyle: loaded.directionsPageStyle,
+          directionsMap: loaded.directionsMap,
         });
       })
       .catch((err: unknown) => void message.error(extractApiError(err)));
@@ -87,6 +96,8 @@ export function TollBotLimitsModal({ open, onClose, onSaved }: Props) {
         newGroupsEnabled: values.newGroupsEnabled,
         privateChatEnabled: values.privateChatEnabled,
         directionsMode: values.directionsMode,
+        directionsPageStyle: values.directionsPageStyle,
+        directionsMap: values.directionsMap,
       });
       void message.success('Settings saved');
       onSaved(saved);
@@ -209,6 +220,31 @@ export function TollBotLimitsModal({ open, onClose, onSaved }: Props) {
               <Radio value="chat" style={{ display: 'flex' }}>
                 Post in the chat — the bot sends the directions to that group in one collapsed block (the first
                 few lines show, the rest open with a tap; deleted after 5 minutes like the card)
+              </Radio>
+            </Radio.Group>
+          </Form.Item>
+
+          <Form.Item
+            name="directionsPageStyle"
+            label="Directions page look (map.easydat.us)"
+            extra="Applies at once, also to links already sent."
+          >
+            <Radio.Group>
+              <Radio value="classic" style={{ display: 'flex', marginBottom: 8 }}>
+                Classic — the original page: one column, big Copy directions button, no site menu
+              </Radio>
+              <Radio value="modern" style={{ display: 'flex' }}>
+                Modern — the Easy DAT site look: site menu, costs card, numbered steps
+              </Radio>
+            </Radio.Group>
+          </Form.Item>
+          <Form.Item name="directionsMap" label="Map on the directions page" extra="Shown in both looks.">
+            <Radio.Group>
+              <Radio value="google" style={{ display: 'flex', marginBottom: 8 }}>
+                Google Maps — Google's free map, following the card's Google Maps link
+              </Radio>
+              <Radio value="osm" style={{ display: 'flex' }}>
+                OpenStreetMap — the exact TollGuru route line
               </Radio>
             </Radio.Group>
           </Form.Item>
