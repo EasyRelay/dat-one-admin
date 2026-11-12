@@ -30,6 +30,7 @@ import { PageHeader } from '../components/PageHeader';
 import { useDebouncedValue } from '../hooks/useDebouncedValue';
 import { useVisiblePoll } from '../hooks/useVisiblePoll';
 import type { TollBotSettings, TollBotUser, TollBotUsers } from '../types/toll-bot';
+import { TollBotGroupsTab } from './tollbot/TollBotGroupsTab';
 import { TollBotLimitsModal } from './tollbot/TollBotLimitsModal';
 import { TollBotResetModal } from './tollbot/TollBotResetModal';
 import { TollBotUserLimitModal } from './tollbot/TollBotUserLimitModal';
@@ -38,6 +39,7 @@ import { formatDayTime } from '../utils/formatters';
 const POLL_MS = 30_000;
 
 type BlockedFilter = 'all' | 'active' | 'blocked';
+type View = 'users' | 'groups';
 
 function fullName(user: TollBotUser): string {
   return [user.firstName, user.lastName].filter(Boolean).join(' ') || 'No name';
@@ -72,6 +74,7 @@ export function TollBotUsersPage() {
   const [limitsOpen, setLimitsOpen] = useState(false);
   const [limitUser, setLimitUser] = useState<TollBotUser | null>(null);
   const [resetUser, setResetUser] = useState<TollBotUser | null>(null);
+  const [view, setView] = useState<View>('users');
   const debouncedSearch = useDebouncedValue(search);
 
   // Only for the default shown in the header and the per-user hint; the
@@ -130,6 +133,20 @@ export function TollBotUsersPage() {
     try {
       replaceRow(await updateTollBotUser(user.telegramId, { blocked }));
       void message.success(blocked ? 'User blocked' : 'User unblocked');
+    } catch (err) {
+      void message.error(extractApiError(err));
+    } finally {
+      setBusyId(null);
+    }
+  }
+
+  async function togglePrivate(user: TollBotUser, privateAllowed: boolean) {
+    setBusyId(user.telegramId);
+    try {
+      replaceRow(await updateTollBotUser(user.telegramId, { privateAllowed }));
+      void message.success(
+        privateAllowed ? 'Private chat allowed' : 'Private chat no longer allowed',
+      );
     } catch (err) {
       void message.error(extractApiError(err));
     } finally {
@@ -256,6 +273,27 @@ export function TollBotUsersPage() {
       ),
     },
     {
+      title: (
+        <Tooltip title="May calculate lanes in a private chat with the bot. Groups always work; directions always arrive.">
+          Private chat
+        </Tooltip>
+      ),
+      width: 130,
+      render: (_, user) =>
+        settings?.privateChatEnabled ? (
+          <Tooltip title="Open to everyone in Settings">
+            <Tag color="green">Everyone</Tag>
+          </Tooltip>
+        ) : (
+          <Switch
+            size="small"
+            checked={user.privateAllowed}
+            loading={busyId === user.telegramId}
+            onChange={(allowed) => void togglePrivate(user, allowed)}
+          />
+        ),
+    },
+    {
       title: 'Access',
       width: 110,
       render: (_, user) => (
@@ -278,7 +316,7 @@ export function TollBotUsersPage() {
         title="Toll bot"
         subtitle={
           (data?.botUsername
-            ? `People using @${data.botUsername} — tolls and fuel in a private chat`
+            ? `People and groups using @${data.botUsername} — tolls and fuel in Telegram`
             : 'People using the Telegram toll bot') +
           (settings ? ` · default ${settings.dailyLaneLimit} lanes per user per day` : '')
         }
@@ -288,7 +326,7 @@ export function TollBotUsersPage() {
               TollGuru
             </Button>
             <Button icon={<SettingOutlined />} onClick={() => setLimitsOpen(true)}>
-              Limits
+              Settings
             </Button>
             <Button icon={<ReloadOutlined />} onClick={() => void load()}>
               Refresh
@@ -308,6 +346,19 @@ export function TollBotUsersPage() {
       ) : null}
 
       <div className="panel-card">
+        <Segmented<View>
+          style={{ marginBottom: 12 }}
+          value={view}
+          onChange={setView}
+          options={[
+            { value: 'users', label: `Users${data ? ` (${data.total})` : ''}` },
+            { value: 'groups', label: 'Groups' },
+          ]}
+        />
+        {view === 'groups' ? (
+          <TollBotGroupsTab />
+        ) : (
+          <>
         <Space wrap style={{ marginBottom: 12 }}>
           <Input
             allowClear
@@ -340,7 +391,7 @@ export function TollBotUsersPage() {
           columns={columns}
           dataSource={data?.items ?? []}
           locale={{ emptyText: 'Nobody has written to the bot yet' }}
-          scroll={{ x: 980 }}
+          scroll={{ x: 1110 }}
           pagination={{
             current: page,
             pageSize,
@@ -353,6 +404,8 @@ export function TollBotUsersPage() {
             },
           }}
         />
+          </>
+        )}
       </div>
 
       <TollBotLimitsModal

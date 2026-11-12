@@ -1,4 +1,15 @@
-import { App, Form, InputNumber, Modal, Progress, Skeleton, Typography } from 'antd';
+import {
+  App,
+  Divider,
+  Form,
+  Input,
+  InputNumber,
+  Modal,
+  Progress,
+  Skeleton,
+  Switch,
+  Typography,
+} from 'antd';
 import { useEffect, useState } from 'react';
 import { extractApiError } from '../../api/client';
 import { getTollBotSettings, updateTollBotSettings } from '../../api/toll-bot.api';
@@ -8,6 +19,12 @@ import type { TollBotSettings } from '../../types/toll-bot';
 interface FormValues {
   dailyLaneLimit: number | null;
   dailyFetchCap: number | null;
+  dailyFetchCapEnabled: boolean;
+  promoOn: boolean;
+  promoText: string;
+  promoUrl: string;
+  newGroupsEnabled: boolean;
+  privateChatEnabled: boolean;
 }
 
 interface Props {
@@ -16,15 +33,24 @@ interface Props {
   onSaved: (settings: TollBotSettings) => void;
 }
 
+/** The value to store: null when it is just the default, so a later default change applies. */
+function orDefault(value: string, fallback: string): string | null {
+  const trimmed = value.trim();
+  return trimmed === fallback ? null : trimmed;
+}
+
 /**
- * The bot-wide limits. An empty field means "use the server's env value", so
- * clearing a field is how a value set here is taken back.
+ * The toll bot's settings: limits (an empty field = the server's env value),
+ * the promo button under every card, and whether new groups may use the bot
+ * before an admin switches them on.
  */
 export function TollBotLimitsModal({ open, onClose, onSaved }: Props) {
   const { message } = App.useApp();
   const [form] = Form.useForm<FormValues>();
   const [settings, setSettings] = useState<TollBotSettings | null>(null);
   const [saving, setSaving] = useState(false);
+  const promoOn = Form.useWatch('promoOn', form);
+  const capOn = Form.useWatch('dailyFetchCapEnabled', form);
 
   useEffect(() => {
     if (!open) return;
@@ -34,19 +60,31 @@ export function TollBotLimitsModal({ open, onClose, onSaved }: Props) {
         form.setFieldsValue({
           dailyLaneLimit: loaded.dailyLaneLimitSet,
           dailyFetchCap: loaded.dailyFetchCapSet,
+          dailyFetchCapEnabled: loaded.dailyFetchCapEnabled,
+          promoOn: loaded.promoText !== '',
+          promoText: loaded.promoText || loaded.promoDefaultText,
+          promoUrl: loaded.promoUrl,
+          newGroupsEnabled: loaded.newGroupsEnabled,
+          privateChatEnabled: loaded.privateChatEnabled,
         });
       })
       .catch((err: unknown) => void message.error(extractApiError(err)));
   }, [open, form, message]);
 
   async function handleSubmit(values: FormValues) {
+    if (!settings) return;
     setSaving(true);
     try {
       const saved = await updateTollBotSettings({
         dailyLaneLimit: values.dailyLaneLimit ?? null,
         dailyFetchCap: values.dailyFetchCap ?? null,
+        dailyFetchCapEnabled: values.dailyFetchCapEnabled,
+        promoText: values.promoOn ? orDefault(values.promoText, settings.promoDefaultText) : '',
+        promoUrl: values.promoOn ? orDefault(values.promoUrl, settings.promoDefaultUrl) : settings.promoUrlSet,
+        newGroupsEnabled: values.newGroupsEnabled,
+        privateChatEnabled: values.privateChatEnabled,
       });
-      void message.success('Limits saved');
+      void message.success('Settings saved');
       onSaved(saved);
       onClose();
     } catch (err) {
@@ -63,7 +101,7 @@ export function TollBotLimitsModal({ open, onClose, onSaved }: Props) {
 
   return (
     <Modal
-      title="Toll bot limits"
+      title="Toll bot settings"
       open={open}
       onCancel={onClose}
       onOk={() => form.submit()}
@@ -76,10 +114,13 @@ export function TollBotLimitsModal({ open, onClose, onSaved }: Props) {
     >
       {settings ? (
         <Form form={form} layout="vertical" onFinish={handleSubmit}>
+          <Divider titlePlacement="start" style={{ marginTop: 0 }}>
+            Limits
+          </Divider>
           <Form.Item
             name="dailyLaneLimit"
             label="Lanes per user per day"
-            extra={`For every user without a limit of their own. Empty = server default (${settings.envDailyLaneLimit}). In force now: ${settings.dailyLaneLimit}.`}
+            extra={`For every user without a limit of their own. Empty = server default (${settings.envDailyLaneLimit}). In force now: ${settings.dailyLaneLimit}. The day starts at midnight US Eastern time.`}
           >
             <InputNumber
               min={1}
@@ -90,30 +131,90 @@ export function TollBotLimitsModal({ open, onClose, onSaved }: Props) {
             />
           </Form.Item>
           <Form.Item
+            name="dailyFetchCapEnabled"
+            label="Limit TollGuru requests per day (all Telegram users)"
+            valuePropName="checked"
+            extra="Off: no daily cap for Telegram — only each user's own lanes per day still apply."
+          >
+            <Switch />
+          </Form.Item>
+          <Form.Item
             name="dailyFetchCap"
-            label="TollGuru requests per day (all Telegram users)"
+            label="TollGuru requests per day"
             extra={`Only new lanes count; cached lanes are free. 0 = cached lanes only. Empty = server default (${settings.envDailyFetchCap}).`}
           >
             <InputNumber
               min={0}
               max={100000}
               precision={0}
+              disabled={!capOn}
               placeholder={String(settings.envDailyFetchCap)}
               style={{ width: 180 }}
             />
           </Form.Item>
           <Typography.Text type="secondary">
-            Used today: {settings.fetchCapUsedToday} / {settings.dailyFetchCap}
+            {capOn
+              ? `Used today: ${settings.fetchCapUsedToday} / ${settings.dailyFetchCap}`
+              : `Used today: ${settings.fetchCapUsedToday} · no cap`}
           </Typography.Text>
-          <Progress
-            percent={usedPct}
-            size="small"
-            status={usedPct >= 100 ? 'exception' : 'normal'}
-            showInfo={false}
-          />
+          {capOn ? (
+            <Progress
+              percent={usedPct}
+              size="small"
+              status={usedPct >= 100 ? 'exception' : 'normal'}
+              showInfo={false}
+            />
+          ) : null}
+
+          <Divider titlePlacement="start">Promo button</Divider>
+          <Form.Item name="promoOn" label="Show a button under every result card" valuePropName="checked">
+            <Switch />
+          </Form.Item>
+          <Form.Item
+            name="promoText"
+            label="Button text"
+            rules={[
+              { required: promoOn, whitespace: true, message: 'Enter the button text' },
+              { max: 64, message: 'At most 64 characters' },
+            ]}
+          >
+            <Input disabled={!promoOn} placeholder={settings.promoDefaultText} maxLength={64} />
+          </Form.Item>
+          <Form.Item
+            name="promoUrl"
+            label="Link"
+            rules={[
+              { required: promoOn, message: 'Enter the link' },
+              { type: 'url', message: 'Enter a full https:// link' },
+              { pattern: /^https:\/\//, message: 'The link must start with https://' },
+            ]}
+          >
+            <Input disabled={!promoOn} placeholder={settings.promoDefaultUrl} />
+          </Form.Item>
+
+          <Divider titlePlacement="start">Groups</Divider>
+          <Form.Item
+            name="newGroupsEnabled"
+            label="New groups can use the bot right away"
+            valuePropName="checked"
+            extra="Off (default): a group the bot is added to stays off until you switch it on in the Groups tab."
+          >
+            <Switch />
+          </Form.Item>
+
+          <Divider titlePlacement="start">Private chat</Divider>
+          <Form.Item
+            name="privateChatEnabled"
+            label="Everyone can calculate in a private chat with the bot"
+            valuePropName="checked"
+            extra="Off (default): lanes work in groups; in the private chat only users you allow in the Users list (Private chat column). Directions always arrive there."
+            style={{ marginBottom: 0 }}
+          >
+            <Switch />
+          </Form.Item>
         </Form>
       ) : (
-        <Skeleton active paragraph={{ rows: 4 }} />
+        <Skeleton active paragraph={{ rows: 6 }} />
       )}
     </Modal>
   );
