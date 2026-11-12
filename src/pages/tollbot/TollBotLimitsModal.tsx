@@ -6,6 +6,7 @@ import {
   InputNumber,
   Modal,
   Progress,
+  Radio,
   Skeleton,
   Switch,
   Typography,
@@ -14,7 +15,7 @@ import { useEffect, useState } from 'react';
 import { extractApiError } from '../../api/client';
 import { getTollBotSettings, updateTollBotSettings } from '../../api/toll-bot.api';
 import { formModalProps } from '../../theme/modal';
-import type { TollBotSettings } from '../../types/toll-bot';
+import type { TollBotDirectionsMode, TollBotSettings } from '../../types/toll-bot';
 
 interface FormValues {
   dailyLaneLimit: number | null;
@@ -25,6 +26,7 @@ interface FormValues {
   promoUrl: string;
   newGroupsEnabled: boolean;
   privateChatEnabled: boolean;
+  directionsMode: TollBotDirectionsMode;
 }
 
 interface Props {
@@ -66,6 +68,7 @@ export function TollBotLimitsModal({ open, onClose, onSaved }: Props) {
           promoUrl: loaded.promoUrl,
           newGroupsEnabled: loaded.newGroupsEnabled,
           privateChatEnabled: loaded.privateChatEnabled,
+          directionsMode: loaded.directionsMode,
         });
       })
       .catch((err: unknown) => void message.error(extractApiError(err)));
@@ -83,6 +86,7 @@ export function TollBotLimitsModal({ open, onClose, onSaved }: Props) {
         promoUrl: values.promoOn ? orDefault(values.promoUrl, settings.promoDefaultUrl) : settings.promoUrlSet,
         newGroupsEnabled: values.newGroupsEnabled,
         privateChatEnabled: values.privateChatEnabled,
+        directionsMode: values.directionsMode,
       });
       void message.success('Settings saved');
       onSaved(saved);
@@ -190,6 +194,23 @@ export function TollBotLimitsModal({ open, onClose, onSaved }: Props) {
             ]}
           >
             <Input disabled={!promoOn} placeholder={settings.promoDefaultUrl} />
+          </Form.Item>
+
+          <Divider titlePlacement="start">Get directions</Divider>
+          <Form.Item
+            name="directionsMode"
+            label="When someone taps Get directions on a result card"
+            extra="Applies to cards sent from now on; cards already in the chats keep what they had."
+          >
+            <Radio.Group>
+              <Radio value="link" style={{ display: 'flex', marginBottom: 8 }}>
+                Open a link (as now) — the directions page with a Copy button, or the bot's private chat
+              </Radio>
+              <Radio value="chat" style={{ display: 'flex' }}>
+                Post in the chat — the bot sends the directions to that group in one collapsed block (the first
+                few lines show, the rest open with a tap; deleted after 5 minutes like the card)
+              </Radio>
+            </Radio.Group>
           </Form.Item>
 
           <Divider titlePlacement="start">Groups</Divider>

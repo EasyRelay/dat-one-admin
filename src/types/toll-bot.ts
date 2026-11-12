@@ -66,7 +66,16 @@ export interface TollBotSettings {
   newGroupsEnabled: boolean;
   /** Everyone may calculate in the bot's private chat (false = allowed users only). */
   privateChatEnabled: boolean;
+  /** What "Get directions" on a card does. */
+  directionsMode: TollBotDirectionsMode;
 }
+
+/**
+ * "Get directions" on a result card: `link` = a link in the caption (the copy
+ * page, or the bot's private chat); `chat` = a button, and the bot posts the
+ * directions in that chat — the first lines shown, the rest collapsed.
+ */
+export type TollBotDirectionsMode = 'link' | 'chat';
 
 /** Omitted = unchanged; null = back to the env default. */
 export interface UpdateTollBotSettings {
@@ -78,6 +87,7 @@ export interface UpdateTollBotSettings {
   promoUrl?: string | null;
   newGroupsEnabled?: boolean | null;
   privateChatEnabled?: boolean | null;
+  directionsMode?: TollBotDirectionsMode | null;
 }
 
 /** A Telegram group the toll bot is in (or was). */
