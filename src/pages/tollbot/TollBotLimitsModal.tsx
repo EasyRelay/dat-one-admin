@@ -31,6 +31,7 @@ interface FormValues {
   promoUrl: string;
   newGroupsEnabled: boolean;
   privateChatEnabled: boolean;
+  fullRoutesDailyLimitEnabled: boolean;
   directionsMode: TollBotDirectionsMode;
   directionsPageStyle: TollBotDirectionsPageStyle;
   directionsMap: TollBotDirectionsMap;
@@ -75,6 +76,7 @@ export function TollBotLimitsModal({ open, onClose, onSaved }: Props) {
           promoUrl: loaded.promoUrl,
           newGroupsEnabled: loaded.newGroupsEnabled,
           privateChatEnabled: loaded.privateChatEnabled,
+          fullRoutesDailyLimitEnabled: loaded.fullRoutesDailyLimitEnabled,
           directionsMode: loaded.directionsMode,
           directionsPageStyle: loaded.directionsPageStyle,
           directionsMap: loaded.directionsMap,
@@ -95,6 +97,7 @@ export function TollBotLimitsModal({ open, onClose, onSaved }: Props) {
         promoUrl: values.promoOn ? orDefault(values.promoUrl, settings.promoDefaultUrl) : settings.promoUrlSet,
         newGroupsEnabled: values.newGroupsEnabled,
         privateChatEnabled: values.privateChatEnabled,
+        fullRoutesDailyLimitEnabled: values.fullRoutesDailyLimitEnabled,
         directionsMode: values.directionsMode,
         directionsPageStyle: values.directionsPageStyle,
         directionsMap: values.directionsMap,
@@ -144,6 +147,14 @@ export function TollBotLimitsModal({ open, onClose, onSaved }: Props) {
               placeholder={String(settings.envDailyLaneLimit)}
               style={{ width: 180 }}
             />
+          </Form.Item>
+          <Form.Item
+            name="fullRoutesDailyLimitEnabled"
+            label="Limit full route views to one calculation per day"
+            valuePropName="checked"
+            extra="On (default): only the first successful calculation of the day may open every route; later results stay on the cheapest. Off: every result may open every route."
+          >
+            <Switch />
           </Form.Item>
           <Form.Item
             name="dailyFetchCapEnabled"

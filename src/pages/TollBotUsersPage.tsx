@@ -170,6 +170,8 @@ export function TollBotUsersPage() {
     }
   }
 
+  const fullRoutesLimitOn = settings?.fullRoutesDailyLimitEnabled !== false;
+
   const columns: ColumnsType<TollBotUser> = [
     {
       title: 'User',
@@ -219,9 +221,12 @@ export function TollBotUsersPage() {
           </Tooltip>
           <Tooltip
             title={
-              user.lanesToday === 0 && !user.freeRoutesUsedToday
+              user.lanesToday === 0 &&
+              !(fullRoutesLimitOn && user.freeRoutesUsedToday)
                 ? 'Nothing used today'
-                : "Reset today's lane count and free full-routes claim"
+                : fullRoutesLimitOn
+                  ? "Reset today's lane count and free full-routes claim"
+                  : "Reset today's lane count"
             }
           >
             <Button
@@ -229,7 +234,10 @@ export function TollBotUsersPage() {
               type="text"
               icon={<UndoOutlined />}
               aria-label="Reset today"
-              disabled={user.lanesToday === 0 && !user.freeRoutesUsedToday}
+              disabled={
+                user.lanesToday === 0 &&
+                !(fullRoutesLimitOn && user.freeRoutesUsedToday)
+              }
               danger={user.lanesToday >= user.dailyLimit}
               onClick={() => setResetUser(user)}
             />
@@ -237,49 +245,53 @@ export function TollBotUsersPage() {
         </Space>
       ),
     },
-    {
-      title: (
-        <Tooltip title="Whether today’s free full-routes unlock is still available. Available = next calc can open every route. Claimed = first calc already used it.">
-          All routes
-        </Tooltip>
-      ),
-      width: 140,
-      render: (_, user) => (
-        <Space size={4}>
-          <Tooltip
-            title={
-              user.freeRoutesUsedToday
-                ? 'Today’s free full-routes card is used — later calcs stay on the cheapest route'
-                : 'Next calculation can still open every route'
-            }
-          >
-            <Tag
-              color={user.freeRoutesUsedToday ? 'orange' : 'green'}
-              style={{ marginInlineEnd: 0 }}
-            >
-              {user.freeRoutesUsedToday ? 'Claimed' : 'Available'}
-            </Tag>
-          </Tooltip>
-          <Tooltip
-            title={
-              user.freeRoutesUsedToday
-                ? 'Clear free full-routes claim so their next calc can open every route again'
-                : 'Free full-routes still available — nothing to clear'
-            }
-          >
-            <Button
-              size="small"
-              type="text"
-              icon={<ReloadOutlined />}
-              aria-label="Reset free routes"
-              disabled={!user.freeRoutesUsedToday}
-              loading={busyId === user.telegramId}
-              onClick={() => void resetFreeRoutes(user)}
-            />
-          </Tooltip>
-        </Space>
-      ),
-    },
+    ...(fullRoutesLimitOn
+      ? [
+          {
+            title: (
+              <Tooltip title="Whether today’s free full-routes unlock is still available. Available = next calc can open every route. Claimed = first calc already used it.">
+                All routes
+              </Tooltip>
+            ),
+            width: 140,
+            render: (_: unknown, user: TollBotUser) => (
+              <Space size={4}>
+                <Tooltip
+                  title={
+                    user.freeRoutesUsedToday
+                      ? 'Today’s free full-routes card is used — later calcs stay on the cheapest route'
+                      : 'Next calculation can still open every route'
+                  }
+                >
+                  <Tag
+                    color={user.freeRoutesUsedToday ? 'orange' : 'green'}
+                    style={{ marginInlineEnd: 0 }}
+                  >
+                    {user.freeRoutesUsedToday ? 'Claimed' : 'Available'}
+                  </Tag>
+                </Tooltip>
+                <Tooltip
+                  title={
+                    user.freeRoutesUsedToday
+                      ? 'Clear free full-routes claim so their next calc can open every route again'
+                      : 'Free full-routes still available — nothing to clear'
+                  }
+                >
+                  <Button
+                    size="small"
+                    type="text"
+                    icon={<ReloadOutlined />}
+                    aria-label="Reset free routes"
+                    disabled={!user.freeRoutesUsedToday}
+                    loading={busyId === user.telegramId}
+                    onClick={() => void resetFreeRoutes(user)}
+                  />
+                </Tooltip>
+              </Space>
+            ),
+          } satisfies ColumnsType<TollBotUser>[number],
+        ]
+      : []),
     {
       title: 'Total',
       dataIndex: 'lanesTotal',
@@ -437,7 +449,7 @@ export function TollBotUsersPage() {
           columns={columns}
           dataSource={data?.items ?? []}
           locale={{ emptyText: 'Nobody has written to the bot yet' }}
-          scroll={{ x: 1180 }}
+          scroll={{ x: fullRoutesLimitOn ? 1180 : 1040 }}
           pagination={{
             current: page,
             pageSize,

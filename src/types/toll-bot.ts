@@ -71,6 +71,11 @@ export interface TollBotSettings {
   newGroupsEnabled: boolean;
   /** Everyone may calculate in the bot's private chat (false = allowed users only). */
   privateChatEnabled: boolean;
+  /**
+   * true = only the first calc of the day may open every route;
+   * false = every result may open every route.
+   */
+  fullRoutesDailyLimitEnabled: boolean;
   /** What "Get directions" on a card does. */
   directionsMode: TollBotDirectionsMode;
   /** Look of the "Get directions" page on map.easydat.us. */
@@ -102,6 +107,7 @@ export interface UpdateTollBotSettings {
   promoUrl?: string | null;
   newGroupsEnabled?: boolean | null;
   privateChatEnabled?: boolean | null;
+  fullRoutesDailyLimitEnabled?: boolean | null;
   directionsMode?: TollBotDirectionsMode | null;
   directionsPageStyle?: TollBotDirectionsPageStyle | null;
   directionsMap?: TollBotDirectionsMap | null;
