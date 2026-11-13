@@ -35,12 +35,29 @@ interface FormValues {
   directionsMode: TollBotDirectionsMode;
   directionsPageStyle: TollBotDirectionsPageStyle;
   directionsMap: TollBotDirectionsMap;
+  replyDeleteMinutes: number | null;
+  limitDeleteSeconds: number | null;
+  inlinePickDeleteMinutes: number | null;
 }
 
 interface Props {
   open: boolean;
   onClose: () => void;
   onSaved: (settings: TollBotSettings) => void;
+}
+
+/** A number to store: null when empty or just the default, so a later default change applies. */
+function numberOrDefault(value: number | null | undefined, fallback: number): number | null {
+  return value == null || value === fallback ? null : value;
+}
+
+/** "5 min", "never", "1 h", "1 h 30 min" — what an auto-delete value means. */
+function minutesText(minutes: number): string {
+  if (minutes === 0) return 'never';
+  const hours = Math.floor(minutes / 60);
+  const rest = minutes % 60;
+  if (!hours) return `${rest} min`;
+  return rest ? `${hours} h ${rest} min` : `${hours} h`;
 }
 
 /** The value to store: null when it is just the default, so a later default change applies. */
@@ -80,6 +97,9 @@ export function TollBotLimitsModal({ open, onClose, onSaved }: Props) {
           directionsMode: loaded.directionsMode,
           directionsPageStyle: loaded.directionsPageStyle,
           directionsMap: loaded.directionsMap,
+          replyDeleteMinutes: loaded.replyDeleteMinutes,
+          limitDeleteSeconds: loaded.limitDeleteSeconds,
+          inlinePickDeleteMinutes: loaded.inlinePickDeleteMinutes,
         });
       })
       .catch((err: unknown) => void message.error(extractApiError(err)));
@@ -101,6 +121,12 @@ export function TollBotLimitsModal({ open, onClose, onSaved }: Props) {
         directionsMode: values.directionsMode,
         directionsPageStyle: values.directionsPageStyle,
         directionsMap: values.directionsMap,
+        replyDeleteMinutes: numberOrDefault(values.replyDeleteMinutes, settings.replyDeleteMinutesDefault),
+        limitDeleteSeconds: numberOrDefault(values.limitDeleteSeconds, settings.limitDeleteSecondsDefault),
+        inlinePickDeleteMinutes: numberOrDefault(
+          values.inlinePickDeleteMinutes,
+          settings.inlinePickDeleteMinutesDefault,
+        ),
       });
       void message.success('Settings saved');
       onSaved(saved);
@@ -258,6 +284,52 @@ export function TollBotLimitsModal({ open, onClose, onSaved }: Props) {
                 OpenStreetMap — the exact TollGuru route line
               </Radio>
             </Radio.Group>
+          </Form.Item>
+
+          <Divider titlePlacement="start">Auto-delete</Divider>
+          <Form.Item
+            name="replyDeleteMinutes"
+            label="Delete the result card after"
+            extra={`The toll answer (map + prices) in any chat, and the bot's other replies in a group. 0 = never. Empty = default (${minutesText(settings.replyDeleteMinutesDefault)}). Now: ${minutesText(settings.replyDeleteMinutes)}. Applies to answers sent from now on.`}
+          >
+            <InputNumber
+              min={0}
+              max={2760}
+              precision={0}
+              placeholder={String(settings.replyDeleteMinutesDefault)}
+              suffix="min"
+              style={{ width: 180 }}
+            />
+          </Form.Item>
+          <Form.Item
+            name="limitDeleteSeconds"
+            label="Delete the daily-limit message after"
+            extra={`0 = never. Empty = default (${settings.limitDeleteSecondsDefault} s). Now: ${
+              settings.limitDeleteSeconds === 0 ? 'never' : `${settings.limitDeleteSeconds} s`
+            }.`}
+          >
+            <InputNumber
+              min={0}
+              max={3600}
+              precision={0}
+              placeholder={String(settings.limitDeleteSecondsDefault)}
+              suffix="sec"
+              style={{ width: 180 }}
+            />
+          </Form.Item>
+          <Form.Item
+            name="inlinePickDeleteMinutes"
+            label="Delete a lane picked with @easydat_bot after"
+            extra={`The user's own "🚚 City → City" message. In a group the bot must be an admin allowed to delete messages. 0 = never. Empty = default (${minutesText(settings.inlinePickDeleteMinutesDefault)}). Now: ${minutesText(settings.inlinePickDeleteMinutes)}. Telegram allows deleting only within 48 h, so at most 2760 min (46 h).`}
+          >
+            <InputNumber
+              min={0}
+              max={2760}
+              precision={0}
+              placeholder={String(settings.inlinePickDeleteMinutesDefault)}
+              suffix="min"
+              style={{ width: 180 }}
+            />
           </Form.Item>
 
           <Divider titlePlacement="start">Groups</Divider>

@@ -82,6 +82,15 @@ export interface TollBotSettings {
   directionsPageStyle: TollBotDirectionsPageStyle;
   /** Map on that page. */
   directionsMap: TollBotDirectionsMap;
+  /** Auto-delete in force (0 = never): result card + other group replies, minutes. */
+  replyDeleteMinutes: number;
+  /** The daily-limit message, seconds. */
+  limitDeleteSeconds: number;
+  /** A lane picked from the inline list (the user's own message), minutes. */
+  inlinePickDeleteMinutes: number;
+  replyDeleteMinutesDefault: number;
+  limitDeleteSecondsDefault: number;
+  inlinePickDeleteMinutesDefault: number;
 }
 
 /** `classic` = the original copy page; `modern` = the Easy DAT site look. */
@@ -111,6 +120,10 @@ export interface UpdateTollBotSettings {
   directionsMode?: TollBotDirectionsMode | null;
   directionsPageStyle?: TollBotDirectionsPageStyle | null;
   directionsMap?: TollBotDirectionsMap | null;
+  /** 0 = never delete, null = back to the default. */
+  replyDeleteMinutes?: number | null;
+  limitDeleteSeconds?: number | null;
+  inlinePickDeleteMinutes?: number | null;
 }
 
 /** A Telegram group the toll bot is in (or was). */
