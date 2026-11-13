@@ -1,0 +1,645 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Toll bot users — UI preview</title>
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap"
+    />
+    <style>
+      :root {
+        --page-bg: #eef2f6;
+        --card-bg: #ffffff;
+        --text: #0f172a;
+        --muted: #64748b;
+        --accent: #0f766e;
+        --line: #e2e8f0;
+        --soft: #f8fafc;
+        --ok: #059669;
+        --ok-bg: #ecfdf5;
+        --warn: #d97706;
+        --warn-bg: #fffbeb;
+        --danger: #dc2626;
+        --shadow: 0 1px 2px rgba(15, 23, 42, 0.05), 0 8px 24px rgba(15, 23, 42, 0.06);
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        font-family: 'DM Sans', system-ui, sans-serif;
+        color: var(--text);
+        background: var(--page-bg);
+        padding: 24px;
+      }
+
+      .wrap {
+        max-width: 1280px;
+        margin: 0 auto;
+      }
+
+      h1 {
+        margin: 0 0 6px;
+        font-size: 24px;
+        font-weight: 700;
+      }
+
+      .sub {
+        margin: 0 0 20px;
+        color: var(--muted);
+        font-size: 14px;
+      }
+
+      .tabs {
+        display: flex;
+        gap: 8px;
+        margin-bottom: 16px;
+      }
+
+      .tab {
+        border: 1px solid var(--line);
+        background: #fff;
+        color: var(--text);
+        border-radius: 999px;
+        padding: 8px 14px;
+        font: inherit;
+        font-size: 13px;
+        font-weight: 600;
+        cursor: pointer;
+      }
+
+      .tab.active {
+        background: var(--accent);
+        border-color: var(--accent);
+        color: #fff;
+      }
+
+      .note {
+        background: #fff;
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        padding: 12px 14px;
+        margin-bottom: 16px;
+        font-size: 13px;
+        color: var(--muted);
+        box-shadow: var(--shadow);
+      }
+
+      .note strong {
+        color: var(--text);
+      }
+
+      .panel {
+        background: var(--card-bg);
+        border-radius: 14px;
+        box-shadow: var(--shadow);
+        padding: 16px;
+        overflow: auto;
+      }
+
+      .toolbar {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+        margin-bottom: 12px;
+        flex-wrap: wrap;
+      }
+
+      .search {
+        width: 280px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        padding: 8px 12px;
+        font: inherit;
+        font-size: 13px;
+        background: #fff;
+      }
+
+      .seg {
+        display: inline-flex;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        overflow: hidden;
+      }
+
+      .seg span {
+        padding: 7px 12px;
+        font-size: 12px;
+        font-weight: 600;
+        color: var(--muted);
+        background: #fff;
+        border-right: 1px solid var(--line);
+      }
+
+      .seg span:last-child {
+        border-right: 0;
+      }
+
+      .seg span.on {
+        background: var(--soft);
+        color: var(--text);
+      }
+
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 13px;
+        min-width: 980px;
+      }
+
+      th {
+        text-align: left;
+        font-size: 12px;
+        color: var(--muted);
+        font-weight: 600;
+        padding: 10px 8px;
+        border-bottom: 1px solid var(--line);
+        white-space: nowrap;
+      }
+
+      td {
+        padding: 12px 8px;
+        border-bottom: 1px solid var(--line);
+        vertical-align: middle;
+      }
+
+      tr:hover td {
+        background: #fafbfc;
+      }
+
+      .user {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+        min-width: 220px;
+      }
+
+      .avatar {
+        width: 28px;
+        height: 28px;
+        border-radius: 999px;
+        background: #ccfbf1;
+        color: var(--accent);
+        display: grid;
+        place-items: center;
+        font-size: 11px;
+        font-weight: 700;
+        flex: none;
+      }
+
+      .name {
+        font-weight: 600;
+      }
+
+      .meta {
+        color: var(--muted);
+        font-size: 12px;
+        margin-top: 2px;
+      }
+
+      .meta code {
+        font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+        font-size: 11px;
+      }
+
+      .btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        border: 1px solid var(--line);
+        background: #fff;
+        border-radius: 6px;
+        padding: 4px 10px;
+        font: inherit;
+        font-size: 12px;
+        font-weight: 600;
+        cursor: pointer;
+        color: var(--text);
+      }
+
+      .btn:hover {
+        border-color: #cbd5e1;
+        background: var(--soft);
+      }
+
+      .btn:disabled {
+        opacity: 0.4;
+        cursor: not-allowed;
+      }
+
+      .icon {
+        width: 28px;
+        height: 28px;
+        border: 0;
+        background: transparent;
+        border-radius: 6px;
+        cursor: pointer;
+        color: var(--muted);
+        font-size: 14px;
+      }
+
+      .icon:hover:not(:disabled) {
+        background: var(--soft);
+        color: var(--text);
+      }
+
+      .icon:disabled {
+        opacity: 0.35;
+        cursor: not-allowed;
+      }
+
+      .icon.danger {
+        color: var(--danger);
+      }
+
+      .pill {
+        display: inline-flex;
+        align-items: center;
+        border-radius: 999px;
+        padding: 2px 8px;
+        font-size: 11px;
+        font-weight: 700;
+        white-space: nowrap;
+      }
+
+      .pill.blue {
+        background: #eff6ff;
+        color: #2563eb;
+      }
+
+      .pill.green {
+        background: var(--ok-bg);
+        color: var(--ok);
+      }
+
+      .pill.orange {
+        background: var(--warn-bg);
+        color: var(--warn);
+      }
+
+      .pill.red {
+        background: #fef2f2;
+        color: var(--danger);
+      }
+
+      .cell-row {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        flex-wrap: wrap;
+      }
+
+      .count.danger {
+        color: var(--danger);
+        font-weight: 700;
+      }
+
+      .switch {
+        width: 34px;
+        height: 18px;
+        border-radius: 999px;
+        background: #cbd5e1;
+        position: relative;
+        display: inline-block;
+        vertical-align: middle;
+      }
+
+      .switch.on {
+        background: var(--accent);
+      }
+
+      .switch::after {
+        content: '';
+        position: absolute;
+        top: 2px;
+        left: 2px;
+        width: 14px;
+        height: 14px;
+        border-radius: 50%;
+        background: #fff;
+        transition: left 0.15s;
+      }
+
+      .switch.on::after {
+        left: 18px;
+      }
+
+      .toast {
+        position: fixed;
+        right: 20px;
+        bottom: 20px;
+        background: #0f172a;
+        color: #fff;
+        padding: 10px 14px;
+        border-radius: 10px;
+        font-size: 13px;
+        opacity: 0;
+        transform: translateY(8px);
+        transition: 0.2s;
+        pointer-events: none;
+        z-index: 20;
+      }
+
+      .toast.show {
+        opacity: 1;
+        transform: translateY(0);
+      }
+
+      .view {
+        display: none;
+      }
+
+      .view.active {
+        display: block;
+      }
+
+      .legend {
+        margin-top: 14px;
+        display: flex;
+        gap: 16px;
+        flex-wrap: wrap;
+        font-size: 12px;
+        color: var(--muted);
+      }
+
+      .legend span {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <h1>Toll bot users — UI preview</h1>
+      <p class="sub">
+        Bu faqat preview. Chapdagi tugmalar bilan hozirgi va yangi layoutni solishtiring.
+        Tugmalarni bosib ko‘rishingiz mumkin (toast chiqadi).
+      </p>
+
+      <div class="tabs">
+        <button class="tab active" data-view="after" type="button">Yangi (tavsiya)</button>
+        <button class="tab" data-view="before" type="button">Hozirgi (crowded)</button>
+      </div>
+
+      <div id="view-after" class="view active">
+        <div class="note">
+          <strong>Yangi:</strong> Telegram ustuni yo‘q (Open user ichida).
+          <strong>Lanes</strong> alohida. <strong>All routes</strong> =
+          <em>Available</em> / <em>Claimed</em> (+ faqat Claimed’da refresh).
+        </div>
+        <div class="panel">
+          <div class="toolbar">
+            <input class="search" value="Name, @username or Telegram id" readonly />
+            <div class="seg">
+              <span class="on">All</span>
+              <span>Active</span>
+              <span>Blocked</span>
+            </div>
+          </div>
+          <table>
+            <thead>
+              <tr>
+                <th>User</th>
+                <th>Lanes</th>
+                <th>All routes</th>
+                <th>Total</th>
+                <th>Last lane</th>
+                <th>Last seen</th>
+                <th>Private</th>
+                <th>Access</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>
+                  <div class="user">
+                    <div class="avatar">JD</div>
+                    <div>
+                      <div class="name">John Dispatch</div>
+                      <div class="meta">@john_dispatch · <code>691607265</code></div>
+                    </div>
+                    <button class="btn" type="button" data-toast="Open Telegram profile">Open</button>
+                  </div>
+                </td>
+                <td>
+                  <div class="cell-row">
+                    <span>2/3</span>
+                    <button class="icon" type="button" title="Edit limit" data-toast="Edit daily limit">✎</button>
+                    <button class="icon" type="button" title="Reset today" data-toast="Reset today (lanes + unlock)">↺</button>
+                  </div>
+                </td>
+                <td>
+                  <div class="cell-row">
+                    <span class="pill green">Available</span>
+                    <button class="icon" type="button" disabled title="Nothing to clear">↻</button>
+                  </div>
+                </td>
+                <td>48</td>
+                <td>Chicago, IL → Boston, MA</td>
+                <td>Today 09:12</td>
+                <td><span class="switch on" title="Private allowed"></span></td>
+                <td><span class="switch on" title="Access on"></span></td>
+              </tr>
+              <tr>
+                <td>
+                  <div class="user">
+                    <div class="avatar">MK</div>
+                    <div>
+                      <div class="name">Maria K</div>
+                      <div class="meta">@mk_fleet · <code>812334901</code></div>
+                    </div>
+                    <button class="btn" type="button" data-toast="Open Telegram profile">Open</button>
+                  </div>
+                </td>
+                <td>
+                  <div class="cell-row">
+                    <span class="count danger">3/3</span>
+                    <button class="icon" type="button" title="Edit limit" data-toast="Edit daily limit">✎</button>
+                    <button class="icon danger" type="button" title="Reset today" data-toast="Reset today (lanes + unlock)">↺</button>
+                  </div>
+                </td>
+                <td>
+                  <div class="cell-row">
+                    <span class="pill orange">Claimed</span>
+                    <button
+                      class="icon"
+                      type="button"
+                      title="Clear unlock only"
+                      data-toast="Free full-routes claim cleared"
+                    >
+                      ↻
+                    </button>
+                  </div>
+                </td>
+                <td>112</td>
+                <td>Dallas, TX → Atlanta, GA</td>
+                <td>Today 08:41</td>
+                <td><span class="switch" title="Private off"></span></td>
+                <td><span class="switch on" title="Access on"></span></td>
+              </tr>
+              <tr>
+                <td>
+                  <div class="user">
+                    <div class="avatar">NU</div>
+                    <div>
+                      <div class="name">No username</div>
+                      <div class="meta">no @username · <code>501229887</code></div>
+                    </div>
+                    <button class="btn" type="button" data-toast="Open in Telegram app">Open in app</button>
+                  </div>
+                </td>
+                <td>
+                  <div class="cell-row">
+                    <span>0/5</span>
+                    <button class="icon" type="button" title="Edit limit" data-toast="Edit daily limit">✎</button>
+                    <button class="icon" type="button" disabled title="Nothing used today">↺</button>
+                  </div>
+                </td>
+                <td>
+                  <div class="cell-row">
+                    <span class="pill green">Available</span>
+                    <button class="icon" type="button" disabled title="Nothing to clear">↻</button>
+                  </div>
+                </td>
+                <td>7</td>
+                <td style="color: var(--muted)">—</td>
+                <td>Yesterday 18:02</td>
+                <td><span class="switch on"></span></td>
+                <td>
+                  <div class="cell-row">
+                    <span class="switch"></span>
+                    <span class="pill red">Blocked</span>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+          <div class="legend">
+            <span><span class="pill green">Available</span> keyingi calc’da barcha route ochiq</span>
+            <span><span class="pill orange">Claimed</span> bugungi full unlock ishlatilgan</span>
+            <span>↻ faqat Claimed’da — faqat unlock’ni tozalaydi</span>
+          </div>
+        </div>
+      </div>
+
+      <div id="view-before" class="view">
+        <div class="note">
+          <strong>Hozirgi:</strong> Today ichida hammasi — lanes + own + “Routes used/free” + 3
+          icon. Chiroyli emas va “Routes used” tushunarsiz.
+        </div>
+        <div class="panel">
+          <div class="toolbar">
+            <input class="search" value="Name, @username or Telegram id" readonly />
+            <div class="seg">
+              <span class="on">All</span>
+              <span>Active</span>
+              <span>Blocked</span>
+            </div>
+          </div>
+          <table>
+            <thead>
+              <tr>
+                <th>User</th>
+                <th>Telegram</th>
+                <th>Today</th>
+                <th>All time</th>
+                <th>Last lane</th>
+                <th>Last seen</th>
+                <th>Private</th>
+                <th>Access</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>
+                  <div class="user">
+                    <div class="avatar">JD</div>
+                    <div>
+                      <div class="name">John Dispatch</div>
+                      <div class="meta">@john_dispatch · <code>691607265</code></div>
+                    </div>
+                  </div>
+                </td>
+                <td><button class="btn" type="button">Open</button></td>
+                <td>
+                  <div class="cell-row">
+                    <span>2/3</span>
+                    <span class="pill green">Routes free</span>
+                    <button class="icon" type="button" disabled>↻</button>
+                    <button class="icon" type="button">✎</button>
+                    <button class="icon" type="button">↺</button>
+                  </div>
+                </td>
+                <td>48</td>
+                <td>Chicago, IL → Boston, MA</td>
+                <td>Today 09:12</td>
+                <td><span class="switch on"></span></td>
+                <td><span class="switch on"></span></td>
+              </tr>
+              <tr>
+                <td>
+                  <div class="user">
+                    <div class="avatar">MK</div>
+                    <div>
+                      <div class="name">Maria K</div>
+                      <div class="meta">@mk_fleet · <code>812334901</code></div>
+                    </div>
+                  </div>
+                </td>
+                <td><button class="btn" type="button">Open</button></td>
+                <td>
+                  <div class="cell-row">
+                    <span class="count danger">3/3</span>
+                    <span class="pill orange">Routes used</span>
+                    <button class="icon" type="button">↻</button>
+                    <button class="icon" type="button">✎</button>
+                    <button class="icon danger" type="button">↺</button>
+                  </div>
+                </td>
+                <td>112</td>
+                <td>Dallas, TX → Atlanta, GA</td>
+                <td>Today 08:41</td>
+                <td><span class="switch"></span></td>
+                <td><span class="switch on"></span></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <div class="toast" id="toast"></div>
+
+    <script>
+      const tabs = document.querySelectorAll('.tab');
+      const views = {
+        after: document.getElementById('view-after'),
+        before: document.getElementById('view-before'),
+      };
+      tabs.forEach((tab) => {
+        tab.addEventListener('click', () => {
+          tabs.forEach((t) => t.classList.remove('active'));
+          tab.classList.add('active');
+          Object.values(views).forEach((v) => v.classList.remove('active'));
+          views[tab.dataset.view].classList.add('active');
+        });
+      });
+
+      const toast = document.getElementById('toast');
+      let timer;
+      document.addEventListener('click', (event) => {
+        const btn = event.target.closest('[data-toast]');
+        if (!btn || btn.disabled) return;
+        toast.textContent = btn.getAttribute('data-toast');
+        toast.classList.add('show');
+        clearTimeout(timer);
+        timer = setTimeout(() => toast.classList.remove('show'), 1600);
+      });
+    </script>
+  </body>
+</html>

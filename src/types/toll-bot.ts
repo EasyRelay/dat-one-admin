@@ -20,6 +20,11 @@ export interface TollBotUser {
   blocked: boolean;
   lanesTotal: number;
   lanesToday: number;
+  /**
+   * Today's free full-routes card already claimed (first successful calc).
+   * False = their next calc can still open every route.
+   */
+  freeRoutesUsedToday: boolean;
   /** Lanes per day in force: their own limit, else the bot-wide default. */
   dailyLimit: number;
   /** Their own limit; null = the bot-wide default. */

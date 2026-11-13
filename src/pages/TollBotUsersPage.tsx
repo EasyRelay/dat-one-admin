@@ -3,7 +3,6 @@ import {
   EditOutlined,
   ReloadOutlined,
   SearchOutlined,
-  SendOutlined,
   SettingOutlined,
   UndoOutlined,
 } from '@ant-design/icons';
@@ -25,7 +24,12 @@ import type { ColumnsType } from 'antd/es/table';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { extractApiError } from '../api/client';
-import { getTollBotSettings, listTollBotUsers, updateTollBotUser } from '../api/toll-bot.api';
+import {
+  getTollBotSettings,
+  listTollBotUsers,
+  resetTollBotUserFreeRoutes,
+  updateTollBotUser,
+} from '../api/toll-bot.api';
 import { PageHeader } from '../components/PageHeader';
 import { useDebouncedValue } from '../hooks/useDebouncedValue';
 import { useVisiblePoll } from '../hooks/useVisiblePoll';
@@ -154,10 +158,22 @@ export function TollBotUsersPage() {
     }
   }
 
+  async function resetFreeRoutes(user: TollBotUser) {
+    setBusyId(user.telegramId);
+    try {
+      replaceRow(await resetTollBotUserFreeRoutes(user.telegramId));
+      void message.success('Free full-routes claim cleared');
+    } catch (err) {
+      void message.error(extractApiError(err));
+    } finally {
+      setBusyId(null);
+    }
+  }
+
   const columns: ColumnsType<TollBotUser> = [
     {
       title: 'User',
-      width: 260,
+      width: 280,
       render: (_, user) => (
         <Space>
           <Avatar size="small" style={{ flex: 'none' }}>
@@ -166,32 +182,24 @@ export function TollBotUsersPage() {
           <div style={{ minWidth: 0 }}>
             <div>{fullName(user)}</div>
             <div className="cell-sub">
-              {user.username ? `@${user.username}` : 'no @username'} ·{' '}
-              <code>{user.telegramId}</code>
+              {user.profileUrl ? (
+                <a href={user.profileUrl} target="_blank" rel="noreferrer">
+                  @{user.username}
+                </a>
+              ) : (
+                <Tooltip title="No @username — opens in the Telegram app by id, if their privacy settings allow it">
+                  <a href={user.appUrl}>no @username</a>
+                </Tooltip>
+              )}{' '}
+              · <code>{user.telegramId}</code>
             </div>
           </div>
         </Space>
       ),
     },
     {
-      title: 'Telegram',
+      title: 'Lanes',
       width: 130,
-      render: (_, user) =>
-        user.profileUrl ? (
-          <Button size="small" icon={<SendOutlined />} href={user.profileUrl} target="_blank" rel="noreferrer">
-            Open
-          </Button>
-        ) : (
-          <Tooltip title="No @username — opens in the Telegram app by id, if their privacy settings allow it">
-            <Button size="small" icon={<SendOutlined />} href={user.appUrl}>
-              Open in app
-            </Button>
-          </Tooltip>
-        ),
-    },
-    {
-      title: 'Today',
-      width: 170,
       render: (_, user) => (
         <Space size={4}>
           <Typography.Text
@@ -200,13 +208,6 @@ export function TollBotUsersPage() {
           >
             {user.lanesToday}/{user.dailyLimit}
           </Typography.Text>
-          {user.dailyLimitOverride !== null ? (
-            <Tooltip title="This user's own limit (not the default)">
-              <Tag color="blue" style={{ marginInlineEnd: 0 }}>
-                own
-              </Tag>
-            </Tooltip>
-          ) : null}
           <Tooltip title="Change this user's daily limit">
             <Button
               size="small"
@@ -218,7 +219,9 @@ export function TollBotUsersPage() {
           </Tooltip>
           <Tooltip
             title={
-              user.lanesToday === 0 ? 'Nothing used today' : "Reset today's count so they can calculate again"
+              user.lanesToday === 0 && !user.freeRoutesUsedToday
+                ? 'Nothing used today'
+                : "Reset today's lane count and free full-routes claim"
             }
           >
             <Button
@@ -226,7 +229,7 @@ export function TollBotUsersPage() {
               type="text"
               icon={<UndoOutlined />}
               aria-label="Reset today"
-              disabled={user.lanesToday === 0}
+              disabled={user.lanesToday === 0 && !user.freeRoutesUsedToday}
               danger={user.lanesToday >= user.dailyLimit}
               onClick={() => setResetUser(user)}
             />
@@ -235,9 +238,52 @@ export function TollBotUsersPage() {
       ),
     },
     {
-      title: 'All time',
+      title: (
+        <Tooltip title="Whether today’s free full-routes unlock is still available. Available = next calc can open every route. Claimed = first calc already used it.">
+          All routes
+        </Tooltip>
+      ),
+      width: 140,
+      render: (_, user) => (
+        <Space size={4}>
+          <Tooltip
+            title={
+              user.freeRoutesUsedToday
+                ? 'Today’s free full-routes card is used — later calcs stay on the cheapest route'
+                : 'Next calculation can still open every route'
+            }
+          >
+            <Tag
+              color={user.freeRoutesUsedToday ? 'orange' : 'green'}
+              style={{ marginInlineEnd: 0 }}
+            >
+              {user.freeRoutesUsedToday ? 'Claimed' : 'Available'}
+            </Tag>
+          </Tooltip>
+          <Tooltip
+            title={
+              user.freeRoutesUsedToday
+                ? 'Clear free full-routes claim so their next calc can open every route again'
+                : 'Free full-routes still available — nothing to clear'
+            }
+          >
+            <Button
+              size="small"
+              type="text"
+              icon={<ReloadOutlined />}
+              aria-label="Reset free routes"
+              disabled={!user.freeRoutesUsedToday}
+              loading={busyId === user.telegramId}
+              onClick={() => void resetFreeRoutes(user)}
+            />
+          </Tooltip>
+        </Space>
+      ),
+    },
+    {
+      title: 'Total',
       dataIndex: 'lanesTotal',
-      width: 90,
+      width: 80,
     },
     {
       title: 'Last lane',
@@ -275,10 +321,10 @@ export function TollBotUsersPage() {
     {
       title: (
         <Tooltip title="May calculate lanes in a private chat with the bot. Groups always work; directions always arrive.">
-          Private chat
+          Private
         </Tooltip>
       ),
-      width: 130,
+      width: 100,
       render: (_, user) =>
         settings?.privateChatEnabled ? (
           <Tooltip title="Open to everyone in Settings">
@@ -386,12 +432,12 @@ export function TollBotUsersPage() {
         </Space>
         <Table<TollBotUser>
           rowKey="telegramId"
-          size="middle"
+          size="small"
           loading={loading && !data}
           columns={columns}
           dataSource={data?.items ?? []}
           locale={{ emptyText: 'Nobody has written to the bot yet' }}
-          scroll={{ x: 1110 }}
+          scroll={{ x: 1180 }}
           pagination={{
             current: page,
             pageSize,

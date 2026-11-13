@@ -55,7 +55,15 @@ export function TollBotResetModal({ user, onClose, onDone }: Props) {
             <b>
               {user.lanesToday}/{user.dailyLimit}
             </b>{' '}
-            lanes today. Resetting clears today&apos;s count, so they get all {user.dailyLimit} again.
+            lanes today
+            {user.freeRoutesUsedToday ? (
+              <>
+                {' '}
+                and has already used today&apos;s <b>free full-routes</b> card
+              </>
+            ) : null}
+            . Resetting clears today&apos;s lane count and the free-routes claim, so they get all{' '}
+            {user.dailyLimit} lanes again and can open every route on their next calc.
           </Typography.Paragraph>
           <Checkbox checked={notify} onChange={(event) => setNotify(event.target.checked)}>
             Tell them in Telegram that they can calculate again

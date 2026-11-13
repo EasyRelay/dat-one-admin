@@ -43,6 +43,16 @@ export async function resetTollBotUserToday(
   return data;
 }
 
+/** Clear only today's free full-routes claim (lane counts unchanged). */
+export async function resetTollBotUserFreeRoutes(
+  telegramId: number,
+): Promise<TollBotUser> {
+  const { data } = await api.post<TollBotUser>(
+    `${BASE}/${telegramId}/reset-free-routes`,
+  );
+  return data;
+}
+
 export async function getTollBotSettings(): Promise<TollBotSettings> {
   const { data } = await api.get<TollBotSettings>(SETTINGS);
   return data;
