@@ -5,14 +5,16 @@ import {
   RobotOutlined,
   UnorderedListOutlined,
 } from '@ant-design/icons';
-import { App, Button, Segmented, Space, Spin } from 'antd';
+import { App, Button, Segmented, Space, Spin, Typography } from 'antd';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { extractApiError } from '../api/client';
 import { listTollBrowsers } from '../api/toll-browsers.api';
+import { getTollSiteOnline } from '../api/toll-site-online.api';
 import { PageHeader } from '../components/PageHeader';
 import { useVisiblePoll } from '../hooks/useVisiblePoll';
 import type { TollBrowsers } from '../types/toll-browser';
+import type { TollSiteOnline, TollSiteOnlineWindow } from '../types/toll-site-online';
 import { TollCards } from './tollguru/TollCards';
 import { TollMonitor } from './tollguru/TollMonitor';
 import { TollOverview } from './tollguru/TollOverview';
@@ -24,7 +26,9 @@ const TICK_MS = 30_000;
 
 type View = 'overview' | 'cards' | 'monitor';
 const VIEW_KEY = 'dat-one-admin:tollguru-view';
+const ONLINE_WINDOW_KEY = 'dat-one-admin:tolls-site-online-window';
 const VIEWS: View[] = ['overview', 'cards', 'monitor'];
+const ONLINE_WINDOWS: TollSiteOnlineWindow[] = [1, 5, 10];
 
 function readView(): View {
   try {
@@ -35,6 +39,18 @@ function readView(): View {
     // ignore
   }
   return 'monitor';
+}
+
+function readOnlineWindow(): TollSiteOnlineWindow {
+  try {
+    const saved = Number(localStorage.getItem(ONLINE_WINDOW_KEY));
+    if (ONLINE_WINDOWS.includes(saved as TollSiteOnlineWindow)) {
+      return saved as TollSiteOnlineWindow;
+    }
+  } catch {
+    // ignore
+  }
+  return 5;
 }
 
 /**
@@ -53,14 +69,20 @@ export function TollBrowsersPage() {
   const [data, setData] = useState<TollBrowsers | null>(null);
   const [loading, setLoading] = useState(true);
   const [view, setView] = useState<View>(readView);
+  const [onlineWindow, setOnlineWindow] = useState<TollSiteOnlineWindow>(readOnlineWindow);
+  const [siteOnline, setSiteOnline] = useState<TollSiteOnline | null>(null);
   // Server clock minus ours, so countdowns do not inherit a wrong local clock.
   const [skewMs, setSkewMs] = useState(0);
   const [nowMs, setNowMs] = useState(() => Date.now());
 
   const load = useCallback(async () => {
     try {
-      const next = await listTollBrowsers();
+      const [next, online] = await Promise.all([
+        listTollBrowsers(),
+        getTollSiteOnline(onlineWindow),
+      ]);
       setData(next);
+      setSiteOnline(online);
       setSkewMs(new Date(next.now).getTime() - Date.now());
       setNowMs(Date.now());
     } catch (err) {
@@ -68,7 +90,7 @@ export function TollBrowsersPage() {
     } finally {
       setLoading(false);
     }
-  }, [message]);
+  }, [message, onlineWindow]);
 
   useVisiblePoll(load, POLL_MS);
 
@@ -81,6 +103,15 @@ export function TollBrowsersPage() {
     setView(next);
     try {
       localStorage.setItem(VIEW_KEY, next);
+    } catch {
+      // ignore
+    }
+  }
+
+  function changeOnlineWindow(next: TollSiteOnlineWindow) {
+    setOnlineWindow(next);
+    try {
+      localStorage.setItem(ONLINE_WINDOW_KEY, String(next));
     } catch {
       // ignore
     }
@@ -114,6 +145,32 @@ export function TollBrowsersPage() {
           </Space>
         }
       />
+
+      <div className="panel-card" style={{ marginBottom: 16 }}>
+        <Space wrap align="center" style={{ width: '100%', justifyContent: 'space-between' }}>
+          <div>
+            <Typography.Text type="secondary">Easy DAT /tolls online</Typography.Text>
+            <div style={{ fontSize: 28, fontWeight: 700, lineHeight: 1.2 }}>
+              {siteOnline ? siteOnline.online : '—'}
+              <Typography.Text type="secondary" style={{ marginLeft: 8, fontSize: 14, fontWeight: 500 }}>
+                users with a calc in the last {onlineWindow} min
+              </Typography.Text>
+            </div>
+            <Typography.Text type="secondary" style={{ fontSize: 12 }}>
+              Same account submitting again only refreshes last seen — not counted twice.
+            </Typography.Text>
+          </div>
+          <Segmented<TollSiteOnlineWindow>
+            value={onlineWindow}
+            onChange={changeOnlineWindow}
+            options={[
+              { value: 1, label: '1 min' },
+              { value: 5, label: '5 min' },
+              { value: 10, label: '10 min' },
+            ]}
+          />
+        </Space>
+      </div>
 
       {!data ? (
         <div className="panel-card tg-empty">{loading ? <Spin /> : 'Could not load the browsers'}</div>
