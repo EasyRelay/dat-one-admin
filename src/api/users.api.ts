@@ -81,6 +81,29 @@ export async function resetUserTollUsage(id: string): Promise<TollUsage> {
   return data;
 }
 
+/** Hidden-load reveals in the current 12-hour window (US Eastern 00:00 / 12:00). */
+export interface RevealUsage {
+  /** "2026-11-19:pm" */
+  window: string;
+  used: number;
+  limit: number;
+  /** When the window ends (ISO). */
+  resetsAt: string;
+  /** Posting ids revealed in this window. */
+  postings: string[];
+}
+
+export async function getUserRevealUsage(id: string): Promise<RevealUsage> {
+  const { data } = await api.get<RevealUsage>(`/ext-admin/users/${id}/reveals`);
+  return data;
+}
+
+/** Clears this window's reveal count; returns the fresh usage. */
+export async function resetUserRevealUsage(id: string): Promise<RevealUsage> {
+  const { data } = await api.delete<RevealUsage>(`/ext-admin/users/${id}/reveals`);
+  return data;
+}
+
 export interface PurgeResult {
   email: string;
   payments: number;

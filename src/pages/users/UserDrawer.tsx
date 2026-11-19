@@ -22,12 +22,15 @@ import { listPayments } from '../../api/payments.api';
 import {
   getUser,
   getUserTollUsage,
+  getUserRevealUsage,
   logoutUserEverywhere,
   purgeUser,
   resetUserTollUsage,
+  resetUserRevealUsage,
   revokePlan,
   updateUser,
   type TollUsage,
+  type RevealUsage,
 } from '../../api/users.api';
 import { extractApiError } from '../../api/client';
 import { usePlansStore } from '../../store/plans.store';
@@ -87,21 +90,24 @@ export function UserDrawer({
   const [payments, setPayments] = useState<ExtPayment[]>([]);
   const [devices, setDevices] = useState<ExtDevice[]>([]);
   const [tollUsage, setTollUsage] = useState<TollUsage | null>(null);
+  const [revealUsage, setRevealUsage] = useState<RevealUsage | null>(null);
   const [relatedLoading, setRelatedLoading] = useState(false);
 
   const loadRelated = useCallback(
     async (userId: string) => {
       setRelatedLoading(true);
       try {
-        const [paymentPage, devicePage, tolls] = await Promise.all([
+        const [paymentPage, devicePage, tolls, reveals] = await Promise.all([
           listPayments({ userId, limit: 20 }),
           listDevices({ userId, limit: 20 }),
           // Optional: an older backend without the endpoint must not break the drawer.
           getUserTollUsage(userId).catch(() => null),
+          getUserRevealUsage(userId).catch(() => null),
         ]);
         setPayments(paymentPage.items);
         setDevices(devicePage.items);
         setTollUsage(tolls);
+        setRevealUsage(reveals);
       } catch (err) {
         void message.error(extractApiError(err));
       } finally {
@@ -205,6 +211,24 @@ export function UserDrawer({
         try {
           await logoutUserEverywhere(id);
           void message.success('All devices signed out');
+        } catch (err) {
+          void message.error(extractApiError(err));
+        }
+      },
+    });
+  }
+
+  function handleResetReveals() {
+    if (!user || !revealUsage) return;
+    const id = user.id;
+    modal.confirm({
+      title: 'Reset reveal limit?',
+      content: `This 12-hour window's count (${revealUsage.used}/${revealUsage.limit}) goes back to 0, so the account can reveal ${revealUsage.limit} more loads before ${formatEastern(revealUsage.resetsAt)}.`,
+      okText: 'Reset',
+      onOk: async () => {
+        try {
+          setRevealUsage(await resetUserRevealUsage(id));
+          void message.success('Reveal limit reset');
         } catch (err) {
           void message.error(extractApiError(err));
         }
@@ -565,6 +589,51 @@ export function UserDrawer({
       </section>
 
       <section>
+        <p className="drawer-section-title">Hidden-load reveals (this 12 hours)</p>
+        {revealUsage ? (
+          <div className="drawer-inline-row">
+            <Space size={6} wrap>
+              <Tooltip
+                title={
+                  revealUsage.postings.length ? (
+                    <div>
+                      {revealUsage.postings.map((posting) => (
+                        <div key={posting}>{posting}</div>
+                      ))}
+                    </div>
+                  ) : (
+                    'Nothing revealed in this window'
+                  )
+                }
+              >
+                <Tag
+                  color={
+                    revealUsage.used >= revealUsage.limit
+                      ? 'red'
+                      : revealUsage.used > 0
+                        ? 'blue'
+                        : 'default'
+                  }
+                >
+                  {revealUsage.used}/{revealUsage.limit} used
+                </Tag>
+              </Tooltip>
+              <span className="cell-sub">
+                {Math.max(0, revealUsage.limit - revealUsage.used)} left · resets{' '}
+                {formatEastern(revealUsage.resetsAt)}
+                {user.hiddenLoadsEnabled === true ? '' : ' · reveal is off for this account'}
+              </span>
+            </Space>
+            <Button onClick={handleResetReveals} disabled={revealUsage.used === 0}>
+              Reset limit
+            </Button>
+          </div>
+        ) : (
+          <span className="cell-sub">{relatedLoading ? 'Loading…' : '—'}</span>
+        )}
+      </section>
+
+      <section>
         <p className="drawer-section-title">Notifications</p>
         <div className="drawer-inline-row">
           <span className="cell-sub">
@@ -782,4 +851,11 @@ export function UserDrawer({
       />
     </>
   );
+}
+
+/** "12:00 PM ET" — the reveal windows follow the US Eastern clock. */
+function formatEastern(iso: string): string {
+  const at = new Date(iso);
+  if (Number.isNaN(at.getTime())) return 'the next 12:00 / 00:00 ET';
+  return `${at.toLocaleTimeString('en-US', { timeZone: 'America/New_York', hour: 'numeric', minute: '2-digit' })} ET`;
 }
