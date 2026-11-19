@@ -853,9 +853,14 @@ export function UserDrawer({
   );
 }
 
-/** "12:00 PM ET" — the reveal windows follow the US Eastern clock. */
+/** "12:00 PM EST" (EDT in summer) — the reveal windows follow the US Eastern clock. */
 function formatEastern(iso: string): string {
   const at = new Date(iso);
-  if (Number.isNaN(at.getTime())) return 'the next 12:00 / 00:00 ET';
-  return `${at.toLocaleTimeString('en-US', { timeZone: 'America/New_York', hour: 'numeric', minute: '2-digit' })} ET`;
+  if (Number.isNaN(at.getTime())) return 'the next 12:00 / 00:00 EST';
+  return at.toLocaleTimeString('en-US', {
+    timeZone: 'America/New_York',
+    hour: 'numeric',
+    minute: '2-digit',
+    timeZoneName: 'short',
+  });
 }

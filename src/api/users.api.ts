@@ -104,6 +104,23 @@ export async function resetUserRevealUsage(id: string): Promise<RevealUsage> {
   return data;
 }
 
+/** The hidden-load reveal for everyone (accounts keep their own switch). */
+export interface RevealSwitchState {
+  enabled: boolean;
+  /** Accounts with their own reveal switch on. */
+  allowedAccounts: number;
+}
+
+export async function getRevealSwitch(): Promise<RevealSwitchState> {
+  const { data } = await api.get<RevealSwitchState>('/ext-admin/reveal');
+  return data;
+}
+
+export async function setRevealSwitch(enabled: boolean): Promise<RevealSwitchState> {
+  const { data } = await api.put<RevealSwitchState>('/ext-admin/reveal', { enabled });
+  return data;
+}
+
 export interface PurgeResult {
   email: string;
   payments: number;

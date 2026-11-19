@@ -29,6 +29,7 @@ import {
 } from '../utils/formatters';
 import { GrantPlanModal } from './users/GrantPlanModal';
 import { UserDrawer } from './users/UserDrawer';
+import { RevealSwitch } from './users/RevealSwitch';
 
 type StatusFilter = 'active' | 'disabled';
 
@@ -325,6 +326,7 @@ export function UsersPage() {
         }
         extra={
           <Space>
+            <RevealSwitch />
             <Button icon={<ReloadOutlined />} onClick={() => void reload()}>
               Refresh
             </Button>
