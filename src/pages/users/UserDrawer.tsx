@@ -246,6 +246,14 @@ export function UserDrawer({
     );
   }
 
+  function handleToggleHiddenLoads(enabled: boolean) {
+    if (!user) return;
+    void runAction(
+      () => updateUser(user.id, { hiddenLoadsEnabled: enabled }),
+      enabled ? 'Hidden-load reveal on for this account' : 'Hidden-load reveal off for this account',
+    );
+  }
+
   function handleToggleActive() {
     if (!user) return;
     const { id, isActive } = user;
@@ -636,6 +644,18 @@ export function UserDrawer({
                   checked={user.relayEnabled !== false}
                   disabled={busy}
                   onChange={handleToggleRelay}
+                />
+              </div>
+              <div className="drawer-inline-row">
+                <span className="cell-sub">
+                  Reveal hidden loads (“You’re missing broker requirements”) in
+                  DAT One — 20 per 12 hours. Only for accounts with an old MC
+                  that rent their DAT account. Off by default.
+                </span>
+                <Switch
+                  checked={user.hiddenLoadsEnabled === true}
+                  disabled={busy}
+                  onChange={handleToggleHiddenLoads}
                 />
               </div>
               <div className="drawer-inline-row">

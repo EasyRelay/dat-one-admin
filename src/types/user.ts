@@ -12,6 +12,8 @@ export interface ExtUser {
   removed: boolean;
   hidden: boolean;
   relayEnabled: boolean;
+  /** Admin switch: the account may use the hidden-load Reveal in DAT One. */
+  hiddenLoadsEnabled?: boolean;
   note: string | null;
   /** Per-account tri-state: true = forced on, false = forced off, absent = plan decides. */
   featureOverrides: Partial<ExtFeatureMap> | null;
@@ -59,5 +61,6 @@ export interface UpdateExtUserPayload {
   removed?: boolean;
   hidden?: boolean;
   relayEnabled?: boolean;
+  hiddenLoadsEnabled?: boolean;
   featureOverrides?: Partial<ExtFeatureMap> | null;
 }
