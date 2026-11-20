@@ -103,21 +103,24 @@ export function CampaignsPage() {
     },
     {
       title: 'Clicks',
+      dataIndex: 'clickCount',
       width: 90,
       align: 'right',
-      render: (_, row) => row.clickCount,
+      sorter: (a, b) => a.clickCount - b.clickCount,
     },
     {
       title: 'Unique',
+      dataIndex: 'uniqueClickCount',
       width: 90,
       align: 'right',
-      render: (_, row) => row.uniqueClickCount,
+      sorter: (a, b) => a.uniqueClickCount - b.uniqueClickCount,
     },
     {
       title: 'Installs',
+      dataIndex: 'installCount',
       width: 90,
       align: 'right',
-      render: (_, row) => row.installCount ?? 0,
+      sorter: (a, b) => (a.installCount ?? 0) - (b.installCount ?? 0),
     },
     {
       title: 'Last click',
